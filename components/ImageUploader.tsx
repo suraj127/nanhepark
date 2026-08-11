@@ -98,21 +98,31 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
   };
 
-  // File Upload Handler
-  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // File Upload Handler (Async Promise.all for instant preview display)
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
-    if (!files) return;
+    if (!files || files.length === 0) return;
 
     const fileList = Array.from(files);
-    fileList.forEach((file) => {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          onImagesChange([...selectedImages, event.target.result as string]);
-        }
-      };
-      reader.readAsDataURL(file);
+    const readPromises = fileList.map((file) => {
+      return new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          if (event.target?.result) {
+            resolve(event.target.result as string);
+          } else {
+            resolve('');
+          }
+        };
+        reader.onerror = () => resolve('');
+        reader.readAsDataURL(file);
+      });
     });
+
+    const newImages = (await Promise.all(readPromises)).filter((url) => url !== '');
+    if (newImages.length > 0) {
+      onImagesChange([...selectedImages, ...newImages]);
+    }
   };
 
   // Remove Photo
