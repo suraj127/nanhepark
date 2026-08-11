@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mail, Check, Copy, ArrowRight, Table, Paperclip, FileText, ArrowLeft, Volume2, VolumeX, Download, Info } from 'lucide-react';
+import { Mail, Check, Copy, ArrowRight, Table, Paperclip, FileText, ArrowLeft, Volume2, VolumeX, Download, Info, Image as ImageIcon } from 'lucide-react';
 import { CombinedEmailPayload } from '@/lib/types';
 import { useLanguage } from '@/lib/LanguageContext';
 import { TRANSLATIONS } from '@/lib/translations';
@@ -21,6 +21,7 @@ export const EmailPreviewInspector: React.FC<EmailPreviewInspectorProps> = ({
 }) => {
   const { lang, speakText, stopSpeaking, isSpeaking } = useLanguage();
   const [copied, setCopied] = useState(false);
+  const [copiedPhotoIdx, setCopiedPhotoIdx] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'preview' | 'matrix'>('preview');
 
   const handleCopyRaw = () => {
@@ -36,7 +37,7 @@ export const EmailPreviewInspector: React.FC<EmailPreviewInspectorProps> = ({
       const issuesText = payload.detectedIssues
         .map((i) => `${i.issueNameHindi || i.issueName} (${payload.location.address})`)
         .join('. ');
-      speakText(`आधिकारिक ईमेल शिकायत रिपोर्ट तैयार है। दर्ज समस्या: ${issuesText}। जीमेल में फोटो अटैच करने के लिए नीचे दिए फोटो डाउनलोड बटन दबाएं और जीमेल में अटैच पिन दबाकर जोड़ें।`);
+      speakText(`आधिकारिक ईमेल शिकायत रिपोर्ट तैयार है। दर्ज समस्या: ${issuesText}। जीमेल में फोटो अटैच करने के लिए नीचे दिए फोटो कॉपी या डाउनलोड बटन दबाएं और पेस्ट करें।`);
     }
   };
 
@@ -49,6 +50,27 @@ export const EmailPreviewInspector: React.FC<EmailPreviewInspectorProps> = ({
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
+  };
+
+  // Copy photo directly to clipboard (for instant paste in Gmail)
+  const handleCopyPhotoToClipboard = async (dataUrl: string, index: number) => {
+    if (!dataUrl) return;
+    try {
+      const res = await fetch(dataUrl);
+      const blob = await res.blob();
+      if (navigator.clipboard && typeof ClipboardItem !== 'undefined') {
+        await navigator.clipboard.write([
+          new ClipboardItem({ [blob.type || 'image/png']: blob })
+        ]);
+        setCopiedPhotoIdx(index);
+        setTimeout(() => setCopiedPhotoIdx(null), 2000);
+      } else {
+        handleDownloadPhoto(dataUrl, index);
+      }
+    } catch (err) {
+      console.warn('Clipboard image copy fallback to download:', err);
+      handleDownloadPhoto(dataUrl, index);
+    }
   };
 
   return (
@@ -172,13 +194,20 @@ export const EmailPreviewInspector: React.FC<EmailPreviewInspectorProps> = ({
               <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
               <div className="space-y-1">
                 <p className="font-extrabold text-amber-950">
-                  {lang === 'hi' ? '📌 फोटो ईमेल में कैसे जोड़ें (Photo Attachment Guide):' : '📌 Photo Attachment Instructions:'}
+                  {lang === 'hi' ? '📌 फोटो ईमेल में जोड़ने के 2 सबसे आसान तरीके:' : '📌 2 Easy Ways to Attach Photos:'}
                 </p>
-                <p className="font-medium text-amber-900 leading-relaxed">
-                  {lang === 'hi'
-                    ? 'इंटरनेट सुरक्षा नियमों के कारण कोई भी वेबसाइट फोन से फोटो अपने आप अटैच नहीं कर सकती। नीचे दिए "फोटो डाउनलोड करें" बटन को दबाएं, फिर जीमेल खुलने पर अटैच पिन (📎) दबाकर डाउनलोड की गई वाटरमार्क फोटो जोड़ें।'
-                    : 'Web security rules prevent websites from auto-attaching local files. Click "Download Photo" below, then tap the attachment pin (📎) in Gmail to attach it.'}
-                </p>
+                <div className="leading-relaxed text-amber-900 font-medium space-y-1">
+                  <p>
+                    {lang === 'hi'
+                      ? '1️⃣ "फोटो कॉपी करें" बटन दबाएं ➔ जीमेल खुलने पर मैसेज में डायरेक्ट Paste (Ctrl+V) कर दें।'
+                      : '1️⃣ Click "Copy Photo" below, then Paste (Ctrl+V) directly inside Gmail!'}
+                  </p>
+                  <p>
+                    {lang === 'hi'
+                      ? '2️⃣ "फोटो डाउनलोड करें" बटन दबाएं ➔ जीमेल में अटैच पिन (📎) दबाकर फोटो चुन लें।'
+                      : '2️⃣ Click "Download Photo" below, then tap the attachment pin (📎) in Gmail.'}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -209,14 +238,25 @@ export const EmailPreviewInspector: React.FC<EmailPreviewInspectorProps> = ({
                       </div>
 
                       {img.dataUrl && (
-                        <button
-                          type="button"
-                          onClick={() => handleDownloadPhoto(img.dataUrl, idx)}
-                          className="w-full py-2 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 text-xs font-extrabold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
-                        >
-                          <Download className="w-3.5 h-3.5 text-sky-600" />
-                          <span>{lang === 'hi' ? `फोटो #${idx + 1} डाउनलोड करें` : `Download Photo #${idx + 1}`}</span>
-                        </button>
+                        <div className="space-y-1.5">
+                          <button
+                            type="button"
+                            onClick={() => handleCopyPhotoToClipboard(img.dataUrl, idx)}
+                            className="w-full py-2 px-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-extrabold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
+                          >
+                            {copiedPhotoIdx === idx ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <ImageIcon className="w-3.5 h-3.5 text-sky-400" />}
+                            <span>{copiedPhotoIdx === idx ? 'कॉपी हो गई! (Paste करें)' : `📋 फोटो #${idx + 1} कॉपी करें`}</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => handleDownloadPhoto(img.dataUrl, idx)}
+                            className="w-full py-1.5 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 text-xs font-bold flex items-center justify-center gap-1.5 transition cursor-pointer"
+                          >
+                            <Download className="w-3.5 h-3.5 text-sky-600" />
+                            <span>{lang === 'hi' ? `📥 फोटो #${idx + 1} डाउनलोड` : `Download Photo #${idx + 1}`}</span>
+                          </button>
+                        </div>
                       )}
                     </div>
                   ))}
