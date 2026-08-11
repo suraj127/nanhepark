@@ -1,4 +1,4 @@
-export type LanguageMode = 'bilingual' | 'hi' | 'en';
+export type LanguageMode = 'hi' | 'en';
 
 export interface TranslationDictionary {
   headerTitle: { en: string; hi: string };
@@ -88,7 +88,7 @@ export const TRANSLATIONS: TranslationDictionary = {
   },
   headerSubtitle: {
     en: "Matiala, New Delhi • Official Complaint System",
-    hi: "मटियाला, नई दिल्ली • आधिकारिक शिकायत प्रणाली"
+    hi: "ई ब्लॉक, मटियाला, नई दिल्ली • आधिकारिक शिकायत प्रणाली"
   },
   officialDirectory: {
     en: "Official Directory",
@@ -96,7 +96,7 @@ export const TRANSLATIONS: TranslationDictionary = {
   },
   topBannerText: {
     en: "Upload civic photos. System automatically compiles 1 official email to MCD, DJB & PWD authorities.",
-    hi: "फोटो अपलोड करें। हमारा AI सिस्टम अपने आप MCD, DJB, PWD विभागों के अधिकारियों को 1 ईमेल शिकायत बना कर भेजेगा।"
+    hi: "फोटो अपलोड करें। हमारा सिस्टम अपने आप MCD, DJB, PWD, LG व CM कार्यालय को 1 ईमेल शिकायत बना कर भेजेगा।"
   },
   step1Title: {
     en: "1. Take or Upload Photos",
@@ -104,7 +104,7 @@ export const TRANSLATIONS: TranslationDictionary = {
   },
   step1Desc: {
     en: "Click photo or select from gallery (Road, Water, Garbage, Lighting)",
-    hi: "सड़क, पानी, कचरा या लाइट की फोटो खींचे या गैलरी से चुनें"
+    hi: "सड़क, पानी, कचरा या लाइट की फोटो खींचें या गैलरी से चुनें"
   },
   takePhoto: {
     en: "Take Photo",
@@ -129,7 +129,7 @@ export const TRANSLATIONS: TranslationDictionary = {
 
   quickCategoryTitle: {
     en: "Common Complaint Types:",
-    hi: "मुख्य शिकायत प्रकार:"
+    hi: "मुख्य समस्या चुनें:"
   },
   catWater: {
     en: "🌊 Water Overflow / Drainage",
@@ -145,7 +145,7 @@ export const TRANSLATIONS: TranslationDictionary = {
   },
   catLight: {
     en: "💡 Street Light Broken",
-    hi: "💡 स्ट्रीट लाइट खराब"
+    hi: "💡 खराब स्ट्रीट लाइट"
   },
 
   step2Title: {
@@ -166,7 +166,7 @@ export const TRANSLATIONS: TranslationDictionary = {
   },
   addressPlaceholder: {
     en: "Landmark / Street / Block",
-    hi: "गली / मकान नंबर / लैंडमार्क लिखें"
+    hi: "मकान नंबर / गली नंबर / लैंडमार्क लिखें"
   },
 
   step3Title: {
@@ -174,16 +174,16 @@ export const TRANSLATIONS: TranslationDictionary = {
     hi: "3. बोलकर या लिखकर समस्या बताएं (ऐच्छिक)"
   },
   step3Desc: {
-    en: "You can speak in Hindi or English using mic button, or type notes.",
-    hi: "माइक बटन दबाकर हिंदी या इंग्लिश में बोलें या टाइप करें।"
+    en: "You can speak in Hindi using mic button, or type notes.",
+    hi: "माइक बटन दबाकर हिंदी में बोलें या टाइप करें।"
   },
   voiceButton: {
     en: "🎙️ Speak Problem (Voice Note)",
     hi: "🎙️ बोलकर बताएं (आवाज से लिखें)"
   },
   voiceListening: {
-    en: "🔴 Listening... Speak now in Hindi or English",
-    hi: "🔴 सुन रहे हैं... अब बोलिए (हिंदी या इंग्लिश)"
+    en: "🔴 Listening... Speak now in Hindi",
+    hi: "🔴 सुन रहे हैं... अब हिंदी में बोलिए"
   },
   voiceNotSupported: {
     en: "Voice input not supported on this browser. Please type.",
@@ -191,7 +191,7 @@ export const TRANSLATIONS: TranslationDictionary = {
   },
   userNotePlaceholder: {
     en: "e.g. Waterlogging here since 3 days, smells bad, please clean quickly...",
-    hi: "जैसे: 3 दिन से पानी भरा है, बदबू आ रही है, जल्दी सफाई कराएं..."
+    hi: "जैसे: 3 दिन से सीवर का पानी भरा है, बदबू आ रही है, जल्दी सफाई कराएं..."
   },
 
   submitButton: {
@@ -209,7 +209,7 @@ export const TRANSLATIONS: TranslationDictionary = {
 
   modalTitle: {
     en: "Preparing Email Report",
-    hi: "ईमेल रिपोर्ट तैयार की जा रही है"
+    hi: "ईमेल शिकायत तैयार की जा रही है"
   },
   modalSubtitle: {
     en: "Please wait while evidence photos are analyzed.",
@@ -225,7 +225,7 @@ export const TRANSLATIONS: TranslationDictionary = {
   },
   modalStep2Title: {
     en: "2. Analyzing Civic Issues with AI",
-    hi: "2. AI द्वारा समस्या की पहचान की जा रही है"
+    hi: "2. समस्या की स्वचालित जांच की जा रही है"
   },
   modalStep2Desc: {
     en: "Checking DJB, MCD, PWD and Electrical defects",
@@ -237,7 +237,7 @@ export const TRANSLATIONS: TranslationDictionary = {
   },
   modalStep3Desc: {
     en: "Delhi government nodal authority database search",
-    hi: "दिल्ली सरकार के नोडल अधिकारियों के पते"
+    hi: "दिल्ली सरकार के नोडल अधिकारियों के ईमेल"
   },
   modalStep4Title: {
     en: "4. Building Official Draft",
@@ -269,8 +269,8 @@ export const TRANSLATIONS: TranslationDictionary = {
     hi: "कॉपी हो गया!"
   },
   tabEmailContent: {
-    en: "Email Text (हिंदी व इंग्लिश)",
-    hi: "ईमेल सामग्री"
+    en: "Email Text",
+    hi: "ईमेल सामग्री (हिंदी)"
   },
   tabDeptMatrix: {
     en: "Department List",
@@ -332,7 +332,7 @@ export const TRANSLATIONS: TranslationDictionary = {
   },
   escalationTitle: {
     en: "Ministerial & Escalation Nodal Officers",
-    hi: "मंत्री एवं उच्च अधिकारी ईमेल"
+    hi: "उपराज्यपाल, मुख्यमंत्री व मंत्री ईमेल"
   },
   primaryEmails: {
     en: "Primary Email Officers:",
@@ -347,26 +347,8 @@ export const TRANSLATIONS: TranslationDictionary = {
 export function getText(key: keyof TranslationDictionary, lang: LanguageMode): string {
   const item = TRANSLATIONS[key];
   if (!item) return '';
-
   if (lang === 'en') {
     return item.en;
   }
-  if (lang === 'hi') {
-    return item.hi;
-  }
-  // 'bilingual' (default) -> Easy English + Hindi subtitle
-  return `${item.en} / ${item.hi}`;
-}
-
-export function getDualText(key: keyof TranslationDictionary, lang: LanguageMode): { primary: string; secondary?: string } {
-  const item = TRANSLATIONS[key];
-  if (!item) return { primary: '' };
-
-  if (lang === 'en') {
-    return { primary: item.en };
-  }
-  if (lang === 'hi') {
-    return { primary: item.hi };
-  }
-  return { primary: item.en, secondary: item.hi };
+  return item.hi;
 }

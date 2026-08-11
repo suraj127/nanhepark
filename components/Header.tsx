@@ -16,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenDirectory, onReset }) => {
     if (isSpeaking) {
       stopSpeaking();
     } else {
-      speakText("Welcome to Nanhey Park Civic Watch. Step 1: Upload photo. Step 2: Check location. Step 3: Click Generate Email button.");
+      speakText("नन्हे पार्क नागरिक पोर्टल में आपका स्वागत है। स्टेप 1: फोटो अपलोड करें। स्टेप 2: लोकेशन चेक करें। स्टेप 3: ईमेल रिपोर्ट बनाएं पर क्लिक करें।");
     }
   };
 
@@ -35,15 +35,15 @@ export const Header: React.FC<HeaderProps> = ({ onOpenDirectory, onReset }) => {
           <div>
             <div className="flex items-center gap-2">
               <h1 className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight leading-none gradient-text">
-                Nanhey Park Civic Watch
+                नन्हे पार्क नागरिक सेवा पोर्टल
               </h1>
               <span className="glass-badge text-sky-900 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow-2xs">
-                नागरिक सेवा
+                आधिकारिक सेवा
               </span>
             </div>
             <p className="text-xs text-slate-500 flex items-center gap-1 mt-1 font-semibold">
               <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-              <span>E Block, Matiala, New Delhi • Official Portal</span>
+              <span>ई ब्लॉक, मटियाला, नई दिल्ली • आधिकारिक प्रणाली</span>
             </p>
           </div>
         </div>
@@ -54,7 +54,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenDirectory, onReset }) => {
           <button
             type="button"
             onClick={handleAudioGuide}
-            title="Listen Audio Assistance / आवाज सुनें"
+            title="आवाज सुनें"
             className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
               isSpeaking
                 ? 'bg-rose-50 border-rose-300 text-rose-700 animate-pulse shadow-md'
@@ -62,30 +62,22 @@ export const Header: React.FC<HeaderProps> = ({ onOpenDirectory, onReset }) => {
             }`}
           >
             {isSpeaking ? <VolumeX className="w-4 h-4 text-rose-600" /> : <Volume2 className="w-4 h-4 text-sky-600" />}
-            <span className="hidden md:inline">{isSpeaking ? 'Stop Audio' : '🔊 Listen / आवाज'}</span>
+            <span className="hidden md:inline">{isSpeaking ? 'आवाज रोकें' : '🔊 आवाज सुनें'}</span>
           </button>
 
-          {/* Language Switcher */}
+          {/* Clean Language Switcher (Hindi Default) */}
           <div className="flex items-center bg-slate-200/60 p-1 rounded-xl border border-slate-300/60 backdrop-blur-md shadow-2xs">
             <button
-              onClick={() => setLang('bilingual')}
-              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
-                lang === 'bilingual' ? 'bg-white text-slate-900 shadow-xs scale-[1.02]' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              दोनों (Dual)
-            </button>
-            <button
               onClick={() => setLang('hi')}
-              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 lang === 'hi' ? 'bg-white text-slate-900 shadow-xs scale-[1.02]' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
-              हिंदी
+              🇮🇳 हिंदी
             </button>
             <button
               onClick={() => setLang('en')}
-              className={`px-2.5 py-1 text-[11px] font-bold rounded-lg transition-all cursor-pointer ${
+              className={`px-3 py-1 text-xs font-bold rounded-lg transition-all cursor-pointer ${
                 lang === 'en' ? 'bg-white text-slate-900 shadow-xs scale-[1.02]' : 'text-slate-600 hover:text-slate-900'
               }`}
             >
@@ -99,7 +91,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenDirectory, onReset }) => {
             className="flex items-center space-x-1.5 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white shadow-md hover:shadow-lg transition-all cursor-pointer"
           >
             <Building2 className="w-4 h-4 text-sky-400" />
-            <span className="hidden sm:inline">Directory / डायरेक्टरी</span>
+            <span className="hidden sm:inline">सरकारी डायरेक्टरी</span>
           </button>
         </div>
       </div>

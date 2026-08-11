@@ -12,7 +12,7 @@ interface LanguageContextType {
 }
 
 const LanguageContext = createContext<LanguageContextType>({
-  lang: 'bilingual',
+  lang: 'hi',
   setLang: () => {},
   speakText: () => {},
   stopSpeaking: () => {},
@@ -20,12 +20,12 @@ const LanguageContext = createContext<LanguageContextType>({
 });
 
 export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [lang, setLangState] = useState<LanguageMode>('bilingual');
+  const [lang, setLangState] = useState<LanguageMode>('hi');
   const [isSpeaking, setIsSpeaking] = useState(false);
 
   useEffect(() => {
     const saved = localStorage.getItem('civic_lang_mode') as LanguageMode;
-    if (saved && (saved === 'bilingual' || saved === 'hi' || saved === 'en')) {
+    if (saved && (saved === 'hi' || saved === 'en')) {
       setLangState(saved);
     }
   }, []);
@@ -37,7 +37,7 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const speakText = (text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      alert('Audio playback is not supported on this browser.');
+      alert('आपके ब्राउज़र में आवाज प्लेबैक उपलब्ध नहीं है।');
       return;
     }
 
