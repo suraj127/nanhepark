@@ -16,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenDirectory, onReset }) => {
     if (isSpeaking) {
       stopSpeaking();
     } else {
-      speakText("नन्हे पार्क नागरिक सेवा पोर्टल में आपका स्वागत है। स्टेप 1: समस्या की फोटो अपलोड करें। स्टेप 2: जगह की लोकेशन चेक करें। स्टेप 3: बोलकर या लिखकर समस्या बताएं और ईमेल शिकायत रिपोर्ट बनाएं पर क्लिक करें।");
+      speakText("नन्हे पार्क नागरिक सेवा पोर्टल में आपका स्वागत है। नाम भरें, समस्या की फोटो अपलोड करें, और ईमेल शिकायत रिपोर्ट बनाएं पर क्लिक करें।");
     }
   };
 
@@ -37,13 +37,10 @@ export const Header: React.FC<HeaderProps> = ({ onOpenDirectory, onReset }) => {
               <h1 className="font-extrabold text-base sm:text-lg text-slate-900 tracking-tight leading-none gradient-text">
                 नन्हे पार्क नागरिक सेवा पोर्टल
               </h1>
-              <span className="glass-badge text-sky-900 text-[10px] font-extrabold px-2.5 py-0.5 rounded-full shadow-2xs">
-                आधिकारिक सेवा
-              </span>
             </div>
             <p className="text-xs text-slate-500 flex items-center gap-1 mt-1 font-semibold">
               <MapPin className="w-3.5 h-3.5 text-rose-500 shrink-0" />
-              <span>ई ब्लॉक, मटियाला, नई दिल्ली • आधिकारिक प्रणाली</span>
+              <span>ई ब्लॉक, मटियाला, नई दिल्ली</span>
             </p>
           </div>
         </div>

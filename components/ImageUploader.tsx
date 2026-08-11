@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Camera, Upload, MapPin, Trash2, Plus, RefreshCw, Mic, MicOff, Volume2, AlertCircle } from 'lucide-react';
+import { Camera, Upload, MapPin, Trash2, Plus, RefreshCw, Mic, MicOff, Volume2, AlertCircle, User } from 'lucide-react';
 import { LocationData } from '@/lib/types';
 import { useLanguage } from '@/lib/LanguageContext';
 import { TRANSLATIONS } from '@/lib/translations';
@@ -11,6 +11,8 @@ interface ImageUploaderProps {
   onImagesChange: (images: string[]) => void;
   location: LocationData;
   onLocationChange: (loc: LocationData) => void;
+  residentName: string;
+  onResidentNameChange: (name: string) => void;
   userNote: string;
   onUserNoteChange: (note: string) => void;
   onSubmitReport: () => void;
@@ -22,6 +24,8 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
   onImagesChange,
   location,
   onLocationChange,
+  residentName,
+  onResidentNameChange,
   userNote,
   onUserNoteChange,
   onSubmitReport,
@@ -231,7 +235,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 key={cat.id}
                 type="button"
                 onClick={() => handleAddCategoryChip(cat.text)}
-                className="px-3.5 py-1.5 rounded-full glass-badge text-slate-800 hover:text-sky-900 hover:border-sky-400 text-xs font-bold transition-all cursor-pointer flex items-center gap-1 hover:scale-105"
+                className="px-3.5 py-1.5 rounded-full glass-badge text-slate-800 hover:text-sky-900 hover:border-sky-400 text-xs font-bold transition-all cursor-pointer flex items-center gap-1 hover:scale-105 min-h-[38px]"
               >
                 <span className="text-sky-600 font-extrabold">+</span>
                 <span>{cat.text}</span>
@@ -261,7 +265,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               <button
                 type="button"
                 onClick={() => cameraInputRef.current?.click()}
-                className="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center space-x-2 transition shadow-md cursor-pointer hover:scale-[1.02]"
+                className="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center space-x-2 transition shadow-md cursor-pointer hover:scale-[1.02] min-h-[44px]"
               >
                 <Camera className="w-4 h-4 text-sky-400" />
                 <span>{lang === 'hi' ? TRANSLATIONS.takePhoto.hi : TRANSLATIONS.takePhoto.en}</span>
@@ -270,7 +274,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="px-5 py-3 rounded-2xl bg-white/90 hover:bg-white text-slate-900 border border-slate-300 font-bold text-xs sm:text-sm flex items-center space-x-2 transition shadow-sm cursor-pointer hover:scale-[1.02]"
+                className="px-5 py-3 rounded-2xl bg-white/90 hover:bg-white text-slate-900 border border-slate-300 font-bold text-xs sm:text-sm flex items-center space-x-2 transition shadow-sm cursor-pointer hover:scale-[1.02] min-h-[44px]"
               >
                 <Upload className="w-4 h-4 text-slate-600" />
                 <span>{lang === 'hi' ? TRANSLATIONS.browseFiles.hi : TRANSLATIONS.browseFiles.en}</span>
@@ -289,7 +293,6 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               ref={cameraInputRef}
               type="file"
               accept="image/*"
-              capture="environment"
               className="hidden"
               onChange={handleFileSelect}
             />
@@ -303,7 +306,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-slate-900 border border-slate-300 text-xs font-bold flex items-center space-x-1.5 cursor-pointer shadow-2xs"
+                className="px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-slate-900 border border-slate-300 text-xs font-bold flex items-center space-x-1.5 cursor-pointer shadow-2xs min-h-[40px]"
               >
                 <Plus className="w-4 h-4 text-sky-600" />
                 <span>{lang === 'hi' ? TRANSLATIONS.addMorePhotos.hi : TRANSLATIONS.addMorePhotos.en}</span>
@@ -361,7 +364,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             type="button"
             onClick={handleDetectGps}
             disabled={isDetectingGps}
-            className="px-3.5 py-2 rounded-xl glass-badge hover:bg-sky-100 text-sky-900 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition shadow-2xs"
+            className="px-3.5 py-2 rounded-xl glass-badge hover:bg-sky-100 text-sky-900 text-xs font-bold flex items-center gap-1.5 cursor-pointer transition shadow-2xs min-h-[40px]"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isDetectingGps ? 'animate-spin' : ''}`} />
             <span>
@@ -381,7 +384,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               type="text"
               value={location.address}
               onChange={(e) => onLocationChange({ ...location, address: e.target.value })}
-              className="w-full glass-input rounded-2xl px-4 py-3 text-xs sm:text-sm text-slate-900 font-bold focus:outline-none transition"
+              className="w-full glass-input rounded-2xl px-4 py-3 text-xs sm:text-sm text-slate-900 font-bold focus:outline-none transition min-h-[44px]"
               placeholder={lang === 'hi' ? TRANSLATIONS.addressPlaceholder.hi : TRANSLATIONS.addressPlaceholder.en}
             />
           </div>
@@ -395,7 +398,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 step="0.0001"
                 value={location.latitude}
                 onChange={(e) => onLocationChange({ ...location, latitude: parseFloat(e.target.value) || 0 })}
-                className="w-full glass-input rounded-2xl px-3 py-3 text-xs font-mono font-bold text-slate-900"
+                className="w-full glass-input rounded-2xl px-3 py-3 text-xs font-mono font-bold text-slate-900 min-h-[44px]"
               />
             </div>
             <div className="w-1/2">
@@ -407,22 +410,22 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
                 step="0.0001"
                 value={location.longitude}
                 onChange={(e) => onLocationChange({ ...location, longitude: parseFloat(e.target.value) || 0 })}
-                className="w-full glass-input rounded-2xl px-3 py-3 text-xs font-mono font-bold text-slate-900"
+                className="w-full glass-input rounded-2xl px-3 py-3 text-xs font-mono font-bold text-slate-900 min-h-[44px]"
               />
             </div>
           </div>
         </div>
       </div>
 
-      {/* STEP 3: SPEAK OR WRITE NOTE */}
-      <div className="space-y-3 pt-4 border-t border-slate-200/70">
+      {/* STEP 3: RESIDENT NAME & WRITE/SPEAK NOTE */}
+      <div className="space-y-4 pt-4 border-t border-slate-200/70">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <h2 className="text-base sm:text-lg font-extrabold text-slate-900 flex items-center gap-2">
             <span className="w-7 h-7 rounded-full bg-gradient-to-r from-sky-500 to-blue-600 text-white text-xs sm:text-sm flex items-center justify-center font-bold shadow-xs">3</span>
             <span>
               {lang === 'hi'
-                ? TRANSLATIONS.step3Title.hi
-                : TRANSLATIONS.step3Title.en}
+                ? '3. नाम व समस्या का विवरण'
+                : '3. Resident Name & Problem Details'}
             </span>
           </h2>
 
@@ -430,7 +433,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           <button
             type="button"
             onClick={toggleVoiceInput}
-            className={`px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm flex items-center space-x-2 transition-all shadow-md cursor-pointer ${
+            className={`px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm flex items-center space-x-2 transition-all shadow-md cursor-pointer min-h-[44px] ${
               isListening
                 ? 'bg-rose-600 text-white animate-pulse'
                 : 'bg-emerald-600 hover:bg-emerald-700 text-white hover:scale-[1.02]'
@@ -445,17 +448,34 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           </button>
         </div>
 
-        <p className="text-xs text-slate-500 pl-9 font-medium">
-          {lang === 'hi' ? TRANSLATIONS.step3Desc.hi : TRANSLATIONS.step3Desc.en}
-        </p>
+        {/* Resident Name Input */}
+        <div className="space-y-1.5">
+          <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider flex items-center gap-1.5">
+            <User className="w-4 h-4 text-sky-600 shrink-0" />
+            <span>{lang === 'hi' ? 'आपका नाम (शिकायतकर्ता का नाम / Name):' : 'Your Name (Complainant Name):'}</span>
+          </label>
+          <input
+            type="text"
+            value={residentName}
+            onChange={(e) => onResidentNameChange(e.target.value)}
+            placeholder={lang === 'hi' ? 'अपना नाम लिखें (जैसे: सुरज कुमार / निवासी नन्हे पार्क)' : 'Enter your full name (e.g. Suraj Kumar)'}
+            className="w-full glass-input rounded-2xl px-4 py-3 text-xs sm:text-sm text-slate-900 font-bold focus:outline-none transition min-h-[44px]"
+          />
+        </div>
 
-        <textarea
-          rows={3}
-          value={userNote}
-          onChange={(e) => onUserNoteChange(e.target.value)}
-          placeholder={lang === 'hi' ? TRANSLATIONS.userNotePlaceholder.hi : TRANSLATIONS.userNotePlaceholder.en}
-          className="w-full glass-input rounded-2xl px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none transition leading-relaxed font-medium"
-        />
+        {/* User Note Textarea */}
+        <div className="space-y-1.5">
+          <label className="block text-[11px] font-extrabold text-slate-700 uppercase tracking-wider">
+            {lang === 'hi' ? 'समस्या का विवरण (बोलकर या लिखकर बताएं):' : 'Problem Details (Speak or Type):'}
+          </label>
+          <textarea
+            rows={3}
+            value={userNote}
+            onChange={(e) => onUserNoteChange(e.target.value)}
+            placeholder={lang === 'hi' ? TRANSLATIONS.userNotePlaceholder.hi : TRANSLATIONS.userNotePlaceholder.en}
+            className="w-full glass-input rounded-2xl px-4 py-3 text-xs sm:text-sm text-slate-900 focus:outline-none transition leading-relaxed font-medium"
+          />
+        </div>
       </div>
 
       {/* FINAL SUBMIT BUTTON */}
@@ -464,7 +484,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           type="button"
           disabled={selectedImages.length === 0 || isProcessing}
           onClick={onSubmitReport}
-          className={`w-full py-4 px-6 rounded-2xl font-extrabold text-sm sm:text-base transition-all shadow-xl flex items-center justify-center space-x-2 ${
+          className={`w-full py-4 px-6 rounded-2xl font-extrabold text-sm sm:text-base transition-all shadow-xl flex items-center justify-center space-x-2 min-h-[50px] ${
             selectedImages.length === 0 || isProcessing
               ? 'bg-slate-200/80 text-slate-400 cursor-not-allowed border border-slate-300/40'
               : 'glass-btn-primary text-white cursor-pointer hover:scale-[1.01]'

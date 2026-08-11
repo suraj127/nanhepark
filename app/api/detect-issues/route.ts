@@ -196,12 +196,11 @@ function detectIssuesFromNote(userNote: string): DetectedIssue[] {
     severity: 'HIGH',
     observation: 'Public streetlight fixture is non-functional, causing dangerous darkness at night.',
     observationHindi: 'रात में स्ट्रीट लाइट बंद रहने से अंधेरा रहता है जिससे असामाजिक गतिविधियों और सुरक्षा का जोखिम है।',
-    requiredAction: 'Replace burnt-out LED bulb and repair electrical pole connection.',
+    requiredAction: 'Replace burnt-out LED bulb and repair electrical connection.',
     requiredActionHindi: 'खराब एलईडी लाइट को बदलकर बिजली कनेक्शन दुरुस्त करें।',
     photoIndices: [1]
   };
 
-  // Check user selected focus
   const isRoad = noteLower.includes('road') || noteLower.includes('pothole') || noteLower.includes('dsiidc') || noteLower.includes('सड़क') || noteLower.includes('गड्ढा') || noteLower.includes('रास्ता');
   const isWater = noteLower.includes('water') || noteLower.includes('sewer') || noteLower.includes('drain') || noteLower.includes('पानी') || noteLower.includes('सीवर') || noteLower.includes('नाली') || noteLower.includes('गंदा');
   const isGarbage = noteLower.includes('garbage') || noteLower.includes('dump') || noteLower.includes('waste') || noteLower.includes('कचरा') || noteLower.includes('गंदगी') || noteLower.includes('कूड़ा');
@@ -209,13 +208,11 @@ function detectIssuesFromNote(userNote: string): DetectedIssue[] {
 
   const ordered: DetectedIssue[] = [];
 
-  // Put user's primary selected issue FIRST
   if (isRoad) ordered.push(dsiidcRoadIssue);
   if (isWater) ordered.push(djbWaterIssue);
   if (isGarbage) ordered.push(mcdGarbageIssue);
   if (isLight) ordered.push(electricalLightIssue);
 
-  // Fill in secondary issues if not already added
   if (!isRoad) ordered.push({ ...dsiidcRoadIssue, severity: 'MEDIUM' });
   if (!isWater) ordered.push({ ...djbWaterIssue, severity: 'MEDIUM' });
   if (!isGarbage) ordered.push({ ...mcdGarbageIssue, severity: 'MEDIUM' });
@@ -223,7 +220,6 @@ function detectIssuesFromNote(userNote: string): DetectedIssue[] {
   return ordered;
 }
 
-// Default composite report with DSIIDC Road as primary
 function getDefaultIssues(): DetectedIssue[] {
   return [
     {
@@ -271,7 +267,9 @@ function getDefaultIssues(): DetectedIssue[] {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { images, location, userNote } = body;
+    const { images, location, userNote, residentName } = body;
+
+    const senderName = residentName && residentName.trim() !== '' ? residentName.trim() : 'सचेत नागरिक (Concerned Resident)';
 
     if (!images || !Array.isArray(images) || images.length === 0) {
       return NextResponse.json({ error: 'कम से कम 1 फोटो जरूरी है।' }, { status: 400 });
@@ -342,7 +340,7 @@ export async function POST(req: NextRequest) {
       action: i.requiredActionHindi ? `${i.requiredAction}\n${i.requiredActionHindi}` : i.requiredAction
     }));
 
-    // Build Markdown Body
+    // Build Markdown Body with Resident Name in Sign-Off
     let markdownBody = `Respected Sir/Madam / आदरणीय महोदय/महोदया,
 
 This is an official urgent civic complaint regarding severe civic deficiencies observed at:
@@ -380,10 +378,12 @@ ALL DETECTED ISSUES / पाई गई सभी समस्याएं:
 मुख्य संबंधित विभाग (${primaryIssue?.departmentCode}) व अधिकारियों से अनुरोध है कि प्राथमिकता के आधार पर तुरंत समाधान कराएं।
 
 Regards / भवदीय,
+**${senderName}**
 Nanhey Park Civic Watch (नागरिक सेवा समिति)
+E Block, Matiala, New Delhi
 `;
 
-    // Build HTML Body
+    // Build HTML Body with Resident Name in Sign-Off
     const matrixHtmlRows = detectedIssues.map((r, idx) => `
       <tr style="${idx === 0 ? 'background-color: #fef2f2;' : ''}">
         <td style="padding:10px;border:1px solid #e2e8f0;font-weight:bold;color:#0f172a">
@@ -442,7 +442,11 @@ Nanhey Park Civic Watch (नागरिक सेवा समिति)
               (मुख्य संबंधित विभाग (${primaryIssue?.departmentCode}) से अनुरोध है कि प्राथमिकता के आधार पर तुरंत समाधान कराएं।)
             </p>
           </div>
-          <p style="margin-top:24px;font-size:14px">Regards / भवदीय,<br/><strong>Nanhey Park Civic Watch (नागरिक सेवा समिति)</strong></p>
+          <p style="margin-top:24px;font-size:14px">
+            Regards / भवदीय,<br/>
+            <strong style="color: #0f172a; font-size: 15px;">${senderName}</strong><br/>
+            <span>Nanhey Park Civic Watch (नागरिक सेवा समिति)</span>
+          </p>
         </div>
       </div>
     `;

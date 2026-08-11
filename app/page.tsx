@@ -25,6 +25,7 @@ export default function Home() {
     area: 'Nanhey Park, Matiala',
     city: 'New Delhi'
   });
+  const [residentName, setResidentName] = useState('');
   const [userNote, setUserNote] = useState('');
 
   const [isProcessing, setIsProcessing] = useState(false);
@@ -114,14 +115,15 @@ export default function Home() {
         }
       }
 
-      // Step 3: Call detect-issues API with compressed images
+      // Step 3: Call detect-issues API with compressed images and residentName
       const res = await fetch('/api/detect-issues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           images: compressedImages,
           location,
-          userNote
+          userNote,
+          residentName
         })
       });
 
@@ -203,6 +205,7 @@ export default function Home() {
     setDispatchResult(null);
     setErrorMessage(null);
     setUserNote('');
+    setResidentName('');
   };
 
   return (
@@ -250,6 +253,8 @@ export default function Home() {
             onImagesChange={setSelectedImages}
             location={location}
             onLocationChange={setLocation}
+            residentName={residentName}
+            onResidentNameChange={setResidentName}
             userNote={userNote}
             onUserNoteChange={setUserNote}
             onSubmitReport={handleAnalyzeAndGenerateEmail}
@@ -266,7 +271,7 @@ export default function Home() {
             <span>Nanhey Park Civic Watch • नागरिक सेवा पोर्टल</span>
           </p>
           <p className="text-[11px] text-slate-400 font-medium">
-            एकीकृत विभागीय ईमेल शिकायत प्रणाली • 100% Mobile Optimized
+            एकीकृत विभागीय ईमेल शिकायत प्रणाली • 100% Mobile & Resident Friendly
           </p>
         </div>
       </footer>
