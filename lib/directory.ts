@@ -1,6 +1,35 @@
 import { DepartmentContact, EscalationContact } from './types';
 
 export const OFFICIAL_DEPARTMENT_DIRECTORY: Record<string, DepartmentContact> = {
+  DSIIDC: {
+    departmentCode: 'DSIIDC',
+    departmentName: 'Delhi State Industrial & Infrastructure Development Corp. (DSIIDC Roads)',
+    primaryEmails: [
+      'cmd@dsiidc.org',
+      'md@dsiidc.org',
+      'ce1@dsiidc.org',
+      'ce2@dsiidc.org',
+      'se.infra@dsiidc.org'
+    ],
+    secondaryEmails: [
+      'ed@dsiidc.org',
+      'eepwdm412@gmail.com',
+      'eemaint1-ngz@mcd.nic.in'
+    ],
+    grievanceEmails: [
+      'grievance@dsiidc.org'
+    ],
+    ministerialEmails: [
+      'min-ind.delhi@gov.in',
+      'min-pwd.delhi@gov.in'
+    ],
+    officerTitles: [
+      'CMD DSIIDC (Chairman & Managing Director)',
+      'Chief Engineer Infrastructure (DSIIDC)',
+      'Superintending Engineer DSIIDC Roads',
+      'Minister of Industries & Infrastructure'
+    ]
+  },
   DJB: {
     departmentCode: 'DJB',
     departmentName: 'Delhi Jal Board (DJB - Water & Sewerage)',
@@ -148,57 +177,56 @@ export const OFFICIAL_DEPARTMENT_DIRECTORY: Record<string, DepartmentContact> = 
       'sdmdwarka.delhi@gov.in'
     ],
     grievanceEmails: [
-      'secc8dda@gmail.com'
+      'sdmdwarka.delhi@gov.in'
     ],
     ministerialEmails: [
-      'min-ud.delhi@gov.in'
+      'lgdelhi@nic.in'
     ],
-    officerTitles: ['Chief Engineer (DDA Dwarka)', 'Superintending Engineer DDA CC8', 'Executive Engineer WD5']
+    officerTitles: ['Chief Engineer DDA Dwarka', 'Superintending Engineer DDA', 'Executive Engineer DDA WD5']
   },
   REVENUE: {
     departmentCode: 'REVENUE',
-    departmentName: 'Revenue Department (District Magistrate & SDM South-West)',
+    departmentName: 'District Revenue Administration (South West Delhi)',
     primaryEmails: [
       'dmsw@nic.in',
       'sdmdwarka.delhi@gov.in',
       'sdmnajafgarh.delhi@gov.in'
     ],
     secondaryEmails: [
-      'secservices@nic.in',
-      'jsservices@hub.nic.in'
+      'acp-traffic-swd@delhipolice.gov.in'
     ],
     grievanceEmails: [
       'dmsw@nic.in'
     ],
     ministerialEmails: [
-      'cmdelhi@nic.in'
+      'secservices@nic.in'
     ],
-    officerTitles: ['District Magistrate (South-West Delhi)', 'SDM Dwarka', 'SDM Najafgarh']
+    officerTitles: ['District Magistrate South West', 'SDM Dwarka', 'SDM Najafgarh']
   },
-  ENVIRONMENT: {
-    departmentCode: 'ENVIRONMENT',
-    departmentName: 'Delhi Pollution Control Committee (DPCC) & Forest Dept',
+  DPCC: {
+    departmentCode: 'DPCC',
+    departmentName: 'Delhi Pollution Control Committee (DPCC & Forest)',
     primaryEmails: [
-      'skgoyal.dpcc@nic.in',
-      'amitchaurdhary.dpcc@nic.in',
       'chdpcc@nic.in',
-      'msdpcc@nic.in'
+      'msdpcc@nic.in',
+      'skgoyal.dpcc@nic.in',
+      'amitchaurdhary.dpcc@nic.in'
     ],
     secondaryEmails: [
       'dcfwest.gnctd@gov.in',
       'dcfhq.gnctd@gov.in'
     ],
     grievanceEmails: [
-      'chdpcc@nic.in'
+      'msdpcc@nic.in'
     ],
     ministerialEmails: [
       'cmdelhi@nic.in'
     ],
-    officerTitles: ['Chairman DPCC', 'Member Secretary DPCC', 'Deputy Conservator of Forests']
+    officerTitles: ['Chairman DPCC', 'Member Secretary DPCC', 'DCF Forest West Delhi']
   },
-  HEALTH_FOOD: {
-    departmentCode: 'HEALTH_FOOD',
-    departmentName: 'Health, Food Safety & Social Welfare Department',
+  HEALTH: {
+    departmentCode: 'HEALTH',
+    departmentName: 'Directorate of Health Services & Food Safety',
     primaryEmails: [
       'cdmosw.delhi@gov.in',
       'dghs@delhi.gov.in',
@@ -206,10 +234,7 @@ export const OFFICIAL_DEPARTMENT_DIRECTORY: Record<string, DepartmentContact> = 
     ],
     secondaryEmails: [
       'acsw.food@delhi.gov.in',
-      'dirfoodsafety.delhi@gov.in',
-      'dswo-sw.delhi@gov.in',
-      'ddewestb@gmail.com',
-      'ddeswa@gmail.com'
+      'dirfoodsafety.delhi@gov.in'
     ],
     grievanceEmails: [
       'dghs@delhi.gov.in'
@@ -217,126 +242,104 @@ export const OFFICIAL_DEPARTMENT_DIRECTORY: Record<string, DepartmentContact> = 
     ministerialEmails: [
       'pshealth@nic.in'
     ],
-    officerTitles: ['Chief District Medical Officer (SW)', 'Director General Health Services', 'Director Food Safety']
+    officerTitles: ['CDMO South West', 'DG Health Services', 'Director Food Safety']
   }
 };
 
+/**
+ * High Priority Nodal & Escalation Contacts guaranteed on CC
+ */
 export const COMMON_ESCALATION_CONTACTS: EscalationContact[] = [
-  // 1. LG OFFICE (Lieutenant Governor)
   {
-    name: 'Lieutenant Governor Office (LG Secretariat Raj Niwas)',
-    designation: 'Honorable Lieutenant Governor of Delhi',
+    name: 'Honble Lt. Governor Delhi (LG Office)',
+    designation: 'Lt. Governor of Delhi',
     email: 'lgdelhi@nic.in',
     isEscalation: true
   },
   {
-    name: 'Secretary to LG Delhi',
-    designation: 'Principal Secretary to LG Office',
+    name: 'Secretary to Honble Lt. Governor',
+    designation: 'Secretary to LG',
     email: 'secretarytolg@gmail.com',
     isEscalation: true
   },
-
-  // 2. CM OFFICE (Chief Minister)
   {
-    name: 'Chief Minister Office (CMO Delhi)',
-    designation: 'Honorable Chief Minister of Delhi',
+    name: 'Chief Minister Office Delhi (CM Office)',
+    designation: 'Chief Minister of Delhi',
     email: 'cmdelhi@nic.in',
     isEscalation: true
   },
   {
-    name: 'CM Office Public Secretariat',
-    designation: 'Chief Minister Office Delhi',
+    name: 'CM Office Official Cell',
+    designation: 'CM Secretariat Delhi',
     email: 'cm.office@delhi.gov.in',
     isEscalation: true
   },
-
-  // 3. DEPUTY CM OFFICE (Deputy Chief Minister)
   {
     name: 'Deputy Chief Minister Office',
-    designation: 'Deputy Chief Minister Secretariat',
+    designation: 'Deputy Chief Minister Delhi',
     email: 'deputycm.delhi@gov.in',
     isEscalation: true
   },
   {
-    name: 'Deputy CM Public Secretariat',
-    designation: 'Deputy Chief Minister Office',
+    name: 'Deputy CM Secretariat',
+    designation: 'Deputy CM Secretariat',
     email: 'deputycm.office@delhi.gov.in',
     isEscalation: true
   },
-
-  // 4. CHIEF SECRETARY & PRINCIPAL SECRETARIES
   {
-    name: 'Chief Secretary Office (CS Delhi)',
-    designation: 'Chief Secretary, Govt of NCT of Delhi',
+    name: 'Chief Secretary Delhi',
+    designation: 'Chief Secretary GNCTD',
     email: 'csdelhi@nic.in',
     isEscalation: true
   },
   {
-    name: 'Principal Secretary (Urban Development)',
-    designation: 'Department of Urban Development GNCTD',
-    email: 'psud@delhi.gov.in',
-    isEscalation: true
-  },
-  {
-    name: 'Principal Secretary (PWD)',
-    designation: 'Department of Public Works GNCTD',
-    email: 'pspwd@delhi.gov.in',
-    isEscalation: true
-  },
-  {
-    name: 'Principal Secretary (Home)',
-    designation: 'Department of Home GNCTD',
-    email: 'secyhome@nic.in',
-    isEscalation: true
-  },
-
-  // 5. CONCERNED CABINET MINISTERS
-  {
-    name: 'Minister for Urban Development',
-    designation: 'Cabinet Minister Urban Development & MCD',
+    name: 'Minister of Urban Development',
+    designation: 'Cabinet Minister UD Delhi',
     email: 'min-ud.delhi@gov.in',
     isEscalation: true
   },
   {
-    name: 'Minister for Public Works (PWD)',
-    designation: 'Cabinet Minister PWD & Roads',
+    name: 'Minister of Public Works Department',
+    designation: 'Cabinet Minister PWD Delhi',
     email: 'min-pwd.delhi@gov.in',
     isEscalation: true
   },
   {
-    name: 'Minister for Water & Jal Board',
-    designation: 'Cabinet Minister Water & DJB',
+    name: 'Minister of Water & Sewerage',
+    designation: 'Cabinet Minister Water Delhi',
     email: 'min-water.delhi@gov.in',
     isEscalation: true
   },
-
-  // 6. PUBLIC ELECTED REPRESENTATIVES (MP & MLA)
   {
-    name: 'Member of Parliament (MP West Delhi)',
-    designation: 'Kamaljeet Sehrawat (MP West Delhi Constituency)',
+    name: 'Minister of Industries & Infrastructure (DSIIDC)',
+    designation: 'Cabinet Minister Industries Delhi',
+    email: 'min-ind.delhi@gov.in',
+    isEscalation: true
+  },
+  {
+    name: 'Member of Parliament (West Delhi)',
+    designation: 'MP West Delhi Constituency',
     email: 'kamaljeet.sehrawat@sansad.in',
     isEscalation: true
   },
   {
-    name: 'MP West Delhi Office',
-    designation: 'MP West Delhi Public Cell',
+    name: 'MP Office West Delhi Email 2',
+    designation: 'MP West Delhi Nodal',
     email: 'mpwestdelhi@gmail.com',
     isEscalation: true
   },
   {
-    name: 'MLA Matiala Office',
+    name: 'Member of Legislative Assembly (Matiala MLA)',
     designation: 'MLA Matiala Assembly Constituency',
     email: 'mlamatiala-dla@delhi.gov.in',
     isEscalation: true
   },
   {
-    name: 'MLA Matiala Secondary',
-    designation: 'MLA Matiala Public Cell',
+    name: 'MLA Matiala Office Email 2',
+    designation: 'MLA Matiala Nodal',
     email: 'mla.matiala@gmail.com',
     isEscalation: true
   },
-
-  // 7. POLICE COMMISSIONER & PUBLIC GRIEVANCE CELLS
   {
     name: 'Commissioner of Police Delhi (CP Delhi)',
     designation: 'Commissioner of Police Delhi',
@@ -386,13 +389,7 @@ export function deduplicateEmails(emailList: string[]): {
 
 /**
  * Builds the merged TO and CC list for a given list of department codes.
- * GUARANTEES that EVERY email report ALWAYS includes:
- * 1. LG Office (lgdelhi@nic.in, secretarytolg@gmail.com)
- * 2. CM Office (cmdelhi@nic.in, cm.office@delhi.gov.in)
- * 3. Deputy CM Office (deputycm.delhi@gov.in, deputycm.office@delhi.gov.in)
- * 4. Chief Secretary (csdelhi@nic.in)
- * 5. Concerned Cabinet Ministers (min-ud, min-pwd, min-water)
- * 6. Concerned Department Nodal Emails (MCD, DJB, PWD, BSES, etc.)
+ * Ensures the FIRST department in departmentCodes gets TO status.
  */
 export function buildCombinedRecipientList(departmentCodes: string[]): {
   toEmails: string[];
@@ -407,11 +404,14 @@ export function buildCombinedRecipientList(departmentCodes: string[]): {
   const rawTo: string[] = [];
   const rawCc: string[] = [];
 
-  // Ensure active departments always include primary municipal & DJB & PWD
-  const activeCodes = Array.from(new Set([...departmentCodes, 'MCD']));
+  // Ensure active departments always include DSIIDC or primary municipal if empty
+  const activeCodes = Array.from(new Set([...departmentCodes]));
+  if (activeCodes.length === 0) {
+    activeCodes.push('DSIIDC');
+  }
 
-  const primaryDeptCode = activeCodes[0] || 'MCD';
-  const primaryDept = OFFICIAL_DEPARTMENT_DIRECTORY[primaryDeptCode] || OFFICIAL_DEPARTMENT_DIRECTORY['MCD'];
+  const primaryDeptCode = activeCodes[0];
+  const primaryDept = OFFICIAL_DEPARTMENT_DIRECTORY[primaryDeptCode] || OFFICIAL_DEPARTMENT_DIRECTORY['DSIIDC'];
   
   // 1. Primary department emails go to TO
   rawTo.push(...primaryDept.primaryEmails);

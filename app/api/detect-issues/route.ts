@@ -49,23 +49,23 @@ async function tryGeminiVision(images: string[], loc: LocationData, userNote: st
     }
 
     const promptText = `
-You are an expert AI civic inspector for Delhi Civic Watch.
+You are an expert AI civic inspector for Delhi Civic Watch (Nanhey Park / Matiala Area).
 Analyze the provided photographic evidence carefully.
 
-Detect ALL visible civic issues. Common issues:
-1. Sewer overflow / clogged drainage (DJB)
-2. Water leakage / pipe burst (DJB)
-3. Garbage accumulation (MCD)
-4. Dead animal / unhygienic spot (MCD)
-5. Broken streetlight / damaged electric pole (ELECTRICAL)
-6. Open manhole / missing drain cover (PWD or DJB)
-7. Pothole / damaged road (PWD)
-8. Broken traffic signal (TRAFFIC)
+NOTE: Roads in this area come under DSIIDC (Delhi State Industrial and Infrastructure Development Corporation), NOT PWD.
+
+Detect ALL visible civic issues:
+1. Damaged road / pothole (Department: DSIIDC - Delhi State Industrial & Infrastructure Development Corporation)
+2. Sewer overflow / clogged drainage (Department: DJB - Delhi Jal Board)
+3. Water leakage / pipe burst (Department: DJB - Delhi Jal Board)
+4. Garbage accumulation (Department: MCD - Municipal Corporation of Delhi)
+5. Broken streetlight / damaged electric pole (Department: ELECTRICAL - BSES BRPL)
+6. Open manhole / missing drain cover (Department: DSIIDC or DJB)
 
 Location: ${loc.address} (${loc.latitude}, ${loc.longitude})
-${userNote ? `Resident Note: ${userNote}` : ''}
+${userNote ? `Resident Focus Note: ${userNote}` : ''}
 
-Provide issueName (English), issueNameHindi (Devanagari Hindi), observation, observationHindi, requiredAction, requiredActionHindi for each issue.
+Provide issueName (English), issueNameHindi (Devanagari Hindi), departmentCode ('DSIIDC', 'DJB', 'MCD', 'ELECTRICAL'), observation, observationHindi, requiredAction, requiredActionHindi for each issue.
 Return JSON array.
 `;
 
@@ -81,7 +81,7 @@ Return JSON array.
           model: modelName,
           contents: { parts },
           config: {
-            systemInstruction: 'You are an AI Civic Issue Detector. Return structured JSON with Hindi translations.',
+            systemInstruction: 'You are an AI Civic Issue Detector. Return structured JSON with Hindi translations. Use DSIIDC for road issues.',
             responseMimeType: 'application/json',
             responseSchema: {
               type: Type.ARRAY,
@@ -110,19 +110,25 @@ Return JSON array.
           const parsed = JSON.parse(response.text.trim());
           if (Array.isArray(parsed) && parsed.length > 0) {
             console.log(`[Civic Watch] Gemini ${modelName} detected ${parsed.length} issues`);
-            return parsed.map((item, idx) => ({
-              id: item.id || `issue-${idx + 1}`,
-              issueName: item.issueName || 'Civic Deficiency',
-              issueNameHindi: item.issueNameHindi || 'नागरिक समस्या',
-              departmentCode: (item.departmentCode || 'MCD').toUpperCase(),
-              departmentName: item.departmentName || OFFICIAL_DEPARTMENT_DIRECTORY[item.departmentCode]?.departmentName || 'Municipal Authority',
-              severity: (item.severity || 'MEDIUM').toUpperCase() as 'HIGH' | 'MEDIUM' | 'LOW',
-              observation: item.observation || 'Civic issue observed.',
-              observationHindi: item.observationHindi || 'नागरिक समस्या पाई गई है।',
-              requiredAction: item.requiredAction || 'Kindly inspect and rectify.',
-              requiredActionHindi: item.requiredActionHindi || 'कृपया तुरंत निरीक्षण कर समाधान करें।',
-              photoIndices: Array.isArray(item.photoIndices) && item.photoIndices.length > 0 ? item.photoIndices : [1]
-            }));
+            return parsed.map((item, idx) => {
+              let deptCode = (item.departmentCode || 'MCD').toUpperCase();
+              if (deptCode === 'PWD' || item.issueName?.toLowerCase().includes('road') || item.issueName?.toLowerCase().includes('pothole')) {
+                deptCode = 'DSIIDC';
+              }
+              return {
+                id: item.id || `issue-${idx + 1}`,
+                issueName: item.issueName || 'Civic Deficiency',
+                issueNameHindi: item.issueNameHindi || 'नागरिक समस्या',
+                departmentCode: deptCode,
+                departmentName: OFFICIAL_DEPARTMENT_DIRECTORY[deptCode]?.departmentName || item.departmentName || 'Municipal Authority',
+                severity: (item.severity || 'MEDIUM').toUpperCase() as 'HIGH' | 'MEDIUM' | 'LOW',
+                observation: item.observation || 'Civic issue observed.',
+                observationHindi: item.observationHindi || 'नागरिक समस्या पाई गई है।',
+                requiredAction: item.requiredAction || 'Kindly inspect and rectify.',
+                requiredActionHindi: item.requiredActionHindi || 'कृपया तुरंत निरीक्षण कर समाधान करें।',
+                photoIndices: Array.isArray(item.photoIndices) && item.photoIndices.length > 0 ? item.photoIndices : [1]
+              };
+            });
           }
         }
       } catch (modelErr: any) {
@@ -135,91 +141,129 @@ Return JSON array.
   return [];
 }
 
-// Rule-based fallback detection
+// Rule-based fallback detection with DSIIDC for Roads and Focus Sorting
 function detectIssuesFromNote(userNote: string): DetectedIssue[] {
   const noteLower = (userNote || '').toLowerCase();
-  const issues: DetectedIssue[] = [];
 
-  if (noteLower.includes('water') || noteLower.includes('sewer') || noteLower.includes('drain') || noteLower.includes('पानी') || noteLower.includes('सीवर') || noteLower.includes('नाली') || noteLower.includes('गंदा')) {
-    issues.push({
-      id: 'issue-djb', issueName: 'Sewer Overflow & Drainage Waterlogging',
-      issueNameHindi: 'सीवर का गंदा पानी भराव व नाली जाम', departmentCode: 'DJB',
-      departmentName: 'Delhi Jal Board (दिल्ली जल बोर्ड)', severity: 'HIGH',
-      observation: 'Severe sewage water overflow causing unhygienic conditions.',
-      observationHindi: 'सीवर का बदबूदार पानी भर रहा है जिससे आवाजाही ठप है।',
-      requiredAction: 'Depute jetting suction machine to clear blocked sewer line.',
-      requiredActionHindi: 'तुरंत सक्शन मशीन भेजकर सीवर लाइन साफ करें।', photoIndices: [1]
-    });
-  }
+  const dsiidcRoadIssue: DetectedIssue = {
+    id: 'issue-dsiidc',
+    issueName: 'DSIIDC Damaged Road & Dangerous Pothole',
+    issueNameHindi: 'DSIIDC टूटी सड़क व खतरनाक गड्ढा (मटियाला)',
+    departmentCode: 'DSIIDC',
+    departmentName: 'Delhi State Industrial & Infrastructure Development Corp. (DSIIDC Roads)',
+    severity: 'HIGH',
+    observation: 'Damaged asphalt road surface and deep potholes presenting serious accident hazards to commuters in Matiala industrial/residential area.',
+    observationHindi: 'सड़क पर गहरे गड्ढे हैं जिससे दोपहिया वाहनों और पैदल यात्रियों के दुर्घटनाग्रस्त होने का भारी जोखिम है (DSIIDC क्षेत्र)।',
+    requiredAction: 'Depute DSIIDC road maintenance team for immediate cold-mix pothole patching and asphalt resurfacing.',
+    requiredActionHindi: 'DSIIDC सड़क मरम्मत टीम को तुरंत भेजकर गड्ढों की पेचवर्क मरम्मत करवाएं व सड़क समतल करें।',
+    photoIndices: [1]
+  };
 
-  if (noteLower.includes('garbage') || noteLower.includes('dump') || noteLower.includes('waste') || noteLower.includes('कचरा') || noteLower.includes('गंदगी') || noteLower.includes('कूड़ा')) {
-    issues.push({
-      id: 'issue-mcd', issueName: 'Accumulated Waste Dump',
-      issueNameHindi: 'कचरे का ढेर व गंदगी', departmentCode: 'MCD',
-      departmentName: 'Municipal Corporation of Delhi (MCD / नगर निगम)', severity: 'MEDIUM',
-      observation: 'Unattended solid waste dump on public roadside.',
-      observationHindi: 'सड़क किनारे कचरा जमा है जो बीमारी का कारण बन रहा है।',
-      requiredAction: 'Dispatch sanitation workers and waste tipper truck.',
-      requiredActionHindi: 'सफाई कर्मचारी और कचरा गाड़ी भेजकर सफाई कराएं।', photoIndices: [1]
-    });
-  }
+  const djbWaterIssue: DetectedIssue = {
+    id: 'issue-djb',
+    issueName: 'Sewer Overflow & Drainage Waterlogging',
+    issueNameHindi: 'सीवर का गंदा पानी भराव व नाली जाम',
+    departmentCode: 'DJB',
+    departmentName: 'Delhi Jal Board (DJB - Water & Sewerage)',
+    severity: 'HIGH',
+    observation: 'Severe sewage water overflow causing unhygienic conditions and foul smell in public pathway.',
+    observationHindi: 'सीवर का बदबूदार पानी सड़क पर भर रहा है जिससे संक्रामक बीमारियों और आवाजाही ठप होने का खतरा है।',
+    requiredAction: 'Depute jetting suction machine to clear blocked sewer line and disinfect public street.',
+    requiredActionHindi: 'तुरंत सक्शन मशीन भेजकर सीवर लाइन की रुकावट दूर कराएं व क्षेत्र को सेनेटाइज करें।',
+    photoIndices: [1]
+  };
 
-  if (noteLower.includes('road') || noteLower.includes('pothole') || noteLower.includes('सड़क') || noteLower.includes('गड्ढा') || noteLower.includes('रास्ता')) {
-    issues.push({
-      id: 'issue-pwd', issueName: 'Damaged Road & Dangerous Pothole',
-      issueNameHindi: 'क्षतिग्रस्त सड़क व गड्ढा', departmentCode: 'PWD',
-      departmentName: 'Public Works Department (PWD / लोक निर्माण विभाग)', severity: 'HIGH',
-      observation: 'Damaged road with deep potholes presenting accident hazard.',
-      observationHindi: 'सड़क पर गड्ढे हैं जिससे दुर्घटना का खतरा है।',
-      requiredAction: 'Conduct immediate pothole patching and road repair.',
-      requiredActionHindi: 'सड़क के गड्ढों की तुरंत मरम्मत करवाएं।', photoIndices: [1]
-    });
-  }
+  const mcdGarbageIssue: DetectedIssue = {
+    id: 'issue-mcd',
+    issueName: 'Accumulated Waste Dump',
+    issueNameHindi: 'कचरे का ढेर व गंदगी का अंबार',
+    departmentCode: 'MCD',
+    departmentName: 'Municipal Corporation of Delhi (MCD - Najafgarh Zone)',
+    severity: 'HIGH',
+    observation: 'Unattended solid waste dump accumulated on public roadside.',
+    observationHindi: 'सड़क किनारे अनसुलझा कचरा पड़ा है जिससे बदबू व बीमारियां फैल रही हैं।',
+    requiredAction: 'Dispatch sanitation workers and waste tipper truck for immediate clearance.',
+    requiredActionHindi: 'सफाई कर्मचारियों और कचरा गाड़ी को भेजकर कचरे का निस्तारण कराएं।',
+    photoIndices: [1]
+  };
 
-  if (noteLower.includes('light') || noteLower.includes('pole') || noteLower.includes('electric') || noteLower.includes('लाइट') || noteLower.includes('अंधेरा') || noteLower.includes('बिजली')) {
-    issues.push({
-      id: 'issue-electrical', issueName: 'Non-Functional Streetlight',
-      issueNameHindi: 'खराब स्ट्रीट लाइट', departmentCode: 'ELECTRICAL',
-      departmentName: 'Electrical Department / BSES (बिजली विभाग)', severity: 'MEDIUM',
-      observation: 'Streetlight not working, causing darkness at night.',
-      observationHindi: 'स्ट्रीट लाइट बंद है जिससे रात में अंधेरा रहता है।',
-      requiredAction: 'Replace LED bulb and repair electrical connection.',
-      requiredActionHindi: 'एलईडी लाइट बदलकर बिजली कनेक्शन ठीक करें।', photoIndices: [1]
-    });
-  }
+  const electricalLightIssue: DetectedIssue = {
+    id: 'issue-electrical',
+    issueName: 'Non-Functional Streetlight',
+    issueNameHindi: 'खराब / टूटी हुई स्ट्रीट लाइट',
+    departmentCode: 'ELECTRICAL',
+    departmentName: 'Electrical Department / BSES Rajdhani (बिजली विभाग)',
+    severity: 'HIGH',
+    observation: 'Public streetlight fixture is non-functional, causing dangerous darkness at night.',
+    observationHindi: 'रात में स्ट्रीट लाइट बंद रहने से अंधेरा रहता है जिससे असामाजिक गतिविधियों और सुरक्षा का जोखिम है।',
+    requiredAction: 'Replace burnt-out LED bulb and repair electrical pole connection.',
+    requiredActionHindi: 'खराब एलईडी लाइट को बदलकर बिजली कनेक्शन दुरुस्त करें।',
+    photoIndices: [1]
+  };
 
-  return issues;
+  // Check user selected focus
+  const isRoad = noteLower.includes('road') || noteLower.includes('pothole') || noteLower.includes('dsiidc') || noteLower.includes('सड़क') || noteLower.includes('गड्ढा') || noteLower.includes('रास्ता');
+  const isWater = noteLower.includes('water') || noteLower.includes('sewer') || noteLower.includes('drain') || noteLower.includes('पानी') || noteLower.includes('सीवर') || noteLower.includes('नाली') || noteLower.includes('गंदा');
+  const isGarbage = noteLower.includes('garbage') || noteLower.includes('dump') || noteLower.includes('waste') || noteLower.includes('कचरा') || noteLower.includes('गंदगी') || noteLower.includes('कूड़ा');
+  const isLight = noteLower.includes('light') || noteLower.includes('pole') || noteLower.includes('electric') || noteLower.includes('लाइट') || noteLower.includes('अंधेरा') || noteLower.includes('बिजली');
+
+  const ordered: DetectedIssue[] = [];
+
+  // Put user's primary selected issue FIRST
+  if (isRoad) ordered.push(dsiidcRoadIssue);
+  if (isWater) ordered.push(djbWaterIssue);
+  if (isGarbage) ordered.push(mcdGarbageIssue);
+  if (isLight) ordered.push(electricalLightIssue);
+
+  // Fill in secondary issues if not already added
+  if (!isRoad) ordered.push({ ...dsiidcRoadIssue, severity: 'MEDIUM' });
+  if (!isWater) ordered.push({ ...djbWaterIssue, severity: 'MEDIUM' });
+  if (!isGarbage) ordered.push({ ...mcdGarbageIssue, severity: 'MEDIUM' });
+
+  return ordered;
 }
 
-// Default composite report when no keywords matched
+// Default composite report with DSIIDC Road as primary
 function getDefaultIssues(): DetectedIssue[] {
   return [
     {
-      id: 'issue-1', issueName: 'Sewer Overflow & Waterlogging',
-      issueNameHindi: 'सीवर भराव और जलजमाव', departmentCode: 'DJB',
-      departmentName: 'Delhi Jal Board (दिल्ली जल बोर्ड)', severity: 'HIGH',
-      observation: 'Sewage water overflow at residential street.',
-      observationHindi: 'रास्ते पर सीवर का पानी भरा है।',
-      requiredAction: 'Clear sewer blockage and clean area.',
-      requiredActionHindi: 'सीवर की सफाई करवाकर जलजमाव हटाएं।', photoIndices: [1]
+      id: 'issue-dsiidc',
+      issueName: 'DSIIDC Damaged Road & Dangerous Pothole',
+      issueNameHindi: 'DSIIDC टूटी सड़क व खतरनाक गड्ढा (मटियाला)',
+      departmentCode: 'DSIIDC',
+      departmentName: 'Delhi State Industrial & Infrastructure Development Corp. (DSIIDC Roads)',
+      severity: 'HIGH',
+      observation: 'Damaged asphalt road surface and deep potholes in Nanhey Park / Matiala area.',
+      observationHindi: 'सड़क पर गहरे गड्ढे हैं जिससे दोपहिया वाहनों और यात्रियों के लिए भारी जोखिम है।',
+      requiredAction: 'Depute DSIIDC road repair team for immediate cold-mix patching and resurfacing.',
+      requiredActionHindi: 'DSIIDC सड़क मरम्मत टीम को भेजकर गड्ढों की तुरंत मरम्मत करवाएं।',
+      photoIndices: [1]
     },
     {
-      id: 'issue-2', issueName: 'Uncollected Municipal Waste',
-      issueNameHindi: 'कचरे का ढेर', departmentCode: 'MCD',
-      departmentName: 'Municipal Corporation of Delhi (MCD / नगर निगम)', severity: 'MEDIUM',
-      observation: 'Garbage dump on public street corner.',
-      observationHindi: 'सड़क किनारे कचरा जमा है।',
-      requiredAction: 'Arrange waste collection vehicle.',
-      requiredActionHindi: 'सफाई गाड़ी भेजकर कचरा उठवाएं।', photoIndices: [1]
+      id: 'issue-djb',
+      issueName: 'Sewer Overflow & Waterlogging',
+      issueNameHindi: 'सीवर भराव और जलजमाव',
+      departmentCode: 'DJB',
+      departmentName: 'Delhi Jal Board (दिल्ली जल बोर्ड)',
+      severity: 'MEDIUM',
+      observation: 'Sewage water overflow at residential street entrance.',
+      observationHindi: 'रास्ते पर सीवर का पानी भरने से आवाजाही बाधित हो रही है।',
+      requiredAction: 'Clear sewer blockage and clean surrounding area.',
+      requiredActionHindi: 'सीवर लाइन की सफाई करवाकर जलजमाव हटाएं।',
+      photoIndices: [1]
     },
     {
-      id: 'issue-3', issueName: 'Damaged Road & Potholes',
-      issueNameHindi: 'टूटी सड़क व गड्ढे', departmentCode: 'PWD',
-      departmentName: 'Public Works Department (PWD / लोक निर्माण विभाग)', severity: 'MEDIUM',
-      observation: 'Damaged road causing difficulty to vehicles.',
-      observationHindi: 'सड़क टूटी है जिससे परेशानी हो रही है।',
-      requiredAction: 'Repair road surface with asphalt patch.',
-      requiredActionHindi: 'सड़क के गड्ढे भरकर मरम्मत करें।', photoIndices: [1]
+      id: 'issue-mcd',
+      issueName: 'Uncollected Municipal Waste',
+      issueNameHindi: 'कचरे का ढेर व गंदगी',
+      departmentCode: 'MCD',
+      departmentName: 'Municipal Corporation of Delhi (MCD / नगर निगम)',
+      severity: 'MEDIUM',
+      observation: 'Garbage dump accumulated on public street corner.',
+      observationHindi: 'सड़क किनारे अनसुलझा कचरा पड़ा है।',
+      requiredAction: 'Arrange sanitation vehicle for waste collection.',
+      requiredActionHindi: 'सफाई गाड़ी भेजकर कचरा उठवाएं।',
+      photoIndices: [1]
     }
   ];
 }
@@ -254,13 +298,26 @@ export async function POST(req: NextRequest) {
     detectedIssues = await withTimeout(geminiPromise, 15000, []);
 
     if (detectedIssues.length === 0) {
-      console.log('[Civic Watch] Gemini returned 0 results, using rule-based detection');
+      console.log('[Civic Watch] Using focused rule-based detection for note:', userNote);
       detectedIssues = detectIssuesFromNote(userNote || '');
     }
 
     if (detectedIssues.length === 0) {
-      console.log('[Civic Watch] No keywords matched, using default composite report');
+      console.log('[Civic Watch] Using default DSIIDC composite report');
       detectedIssues = getDefaultIssues();
+    }
+
+    // Sort detected issues so user note's focus issue is #1 HIGH severity
+    const noteLower = (userNote || '').toLowerCase();
+    if (noteLower.includes('road') || noteLower.includes('pothole') || noteLower.includes('dsiidc') || noteLower.includes('सड़क') || noteLower.includes('गड्ढा')) {
+      detectedIssues.sort((a, b) => (a.departmentCode === 'DSIIDC' ? -1 : b.departmentCode === 'DSIIDC' ? 1 : 0));
+      if (detectedIssues[0]) detectedIssues[0].severity = 'HIGH';
+    } else if (noteLower.includes('water') || noteLower.includes('sewer') || noteLower.includes('पानी') || noteLower.includes('सीवर')) {
+      detectedIssues.sort((a, b) => (a.departmentCode === 'DJB' ? -1 : b.departmentCode === 'DJB' ? 1 : 0));
+      if (detectedIssues[0]) detectedIssues[0].severity = 'HIGH';
+    } else if (noteLower.includes('garbage') || noteLower.includes('dump') || noteLower.includes('कचरा') || noteLower.includes('गंदगी')) {
+      detectedIssues.sort((a, b) => (a.departmentCode === 'MCD' ? -1 : b.departmentCode === 'MCD' ? 1 : 0));
+      if (detectedIssues[0]) detectedIssues[0].severity = 'HIGH';
     }
 
     // -------------------------------------------------------
@@ -269,11 +326,13 @@ export async function POST(req: NextRequest) {
     const detectedDepartmentCodes = Array.from(new Set(detectedIssues.map((i) => i.departmentCode)));
     const recipientData = buildCombinedRecipientList(detectedDepartmentCodes);
 
-    const hasHighSeverity = detectedIssues.some((i) => i.severity === 'HIGH');
+    const primaryIssue = detectedIssues[0];
     const locationShort = loc.area ? `${loc.area}, ${loc.city}` : loc.address;
-    const subjectPrefix = hasHighSeverity
-      ? 'URGENT / अति आवश्यक: Civic Complaint Report'
-      : 'Civic Complaint Report / नागरिक शिकायत पत्र';
+    
+    // Dynamic focused email subject
+    const subjectPrefix = primaryIssue
+      ? `URGENT / अति आवश्यक: ${primaryIssue.issueName} (${primaryIssue.departmentCode})`
+      : 'URGENT / अति आवश्यक: Civic Complaint Report';
     const emailSubject = `${subjectPrefix} — ${locationShort}`;
 
     const departmentMatrix = detectedIssues.map((i) => ({
@@ -286,36 +345,51 @@ export async function POST(req: NextRequest) {
     // Build Markdown Body
     let markdownBody = `Respected Sir/Madam / आदरणीय महोदय/महोदया,
 
-This is an official civic complaint regarding multiple civic issues at:
-यह निम्नलिखित स्थान पर पाई गई नागरिक समस्याओं की शिकायत है:
+This is an official urgent civic complaint regarding severe civic deficiencies observed at:
+यह निम्नलिखित स्थान पर पाई गई गंभीर नागरिक समस्याओं की शिकायत है:
 
 Location / स्थान: ${loc.address}
-GPS: ${loc.latitude}, ${loc.longitude}
-Date / दिनांक: ${dateFormatted}, ${timeFormatted} IST
+GPS Coordinates / जीपीएस: ${loc.latitude}, ${loc.longitude}
+Date & Time / दिनांक व समय: ${dateFormatted}, ${timeFormatted} IST
+
+---
+
+PRIMARY COMPLAINT FOCUS / मुख्य शिकायत:
+▶ ${primaryIssue?.issueName || 'Civic Infrastructure Deficit'}
+▶ Department Responsible: ${primaryIssue?.departmentName || 'DSIIDC / MCD / DJB'}
+▶ Severity: HIGH / उच्च प्राथमिकता
+
+---
+
+ALL DETECTED ISSUES / पाई गई सभी समस्याएं:
 
 `;
 
     detectedIssues.forEach((iss, idx) => {
-      markdownBody += `${idx + 1}. ${iss.issueName} (${iss.issueNameHindi || ''})\n`;
-      markdownBody += `   Department: ${iss.departmentName}\n`;
-      markdownBody += `   Severity: ${iss.severity}\n`;
-      markdownBody += `   Observation: ${iss.observation}\n`;
-      markdownBody += `   ${iss.observationHindi || ''}\n`;
-      markdownBody += `   Action Required: ${iss.requiredAction}\n`;
-      markdownBody += `   ${iss.requiredActionHindi || ''}\n\n`;
+      markdownBody += `## ${idx + 1}. ${iss.issueName} ${iss.issueNameHindi ? `(${iss.issueNameHindi})` : ''}\n`;
+      markdownBody += `   - Department / विभाग: ${iss.departmentName}\n`;
+      markdownBody += `   - Severity / प्राथमिकता: ${iss.severity}\n`;
+      markdownBody += `   - Observation / विवरण: ${iss.observation}\n`;
+      if (iss.observationHindi) markdownBody += `     ${iss.observationHindi}\n`;
+      markdownBody += `   - Required Action / आवश्यक कार्रवाई: ${iss.requiredAction}\n`;
+      if (iss.requiredActionHindi) markdownBody += `     ${iss.requiredActionHindi}\n\n`;
     });
 
-    markdownBody += `Concerned departments are requested to coordinate and resolve immediately.
-संबंधित विभागों से अनुरोध है कि तुरंत समाधान कराएं।
+    markdownBody += `The primary concerned department (${primaryIssue?.departmentCode}) and nodal officers (LG, CM, Ministers) are requested to take immediate action and resolve the issue.
 
-Regards,
+मुख्य संबंधित विभाग (${primaryIssue?.departmentCode}) व अधिकारियों से अनुरोध है कि प्राथमिकता के आधार पर तुरंत समाधान कराएं।
+
+Regards / भवदीय,
 Nanhey Park Civic Watch (नागरिक सेवा समिति)
 `;
 
     // Build HTML Body
-    const matrixHtmlRows = detectedIssues.map((r) => `
-      <tr>
-        <td style="padding:10px;border:1px solid #e2e8f0;font-weight:bold;color:#0f172a">${r.departmentName}</td>
+    const matrixHtmlRows = detectedIssues.map((r, idx) => `
+      <tr style="${idx === 0 ? 'background-color: #fef2f2;' : ''}">
+        <td style="padding:10px;border:1px solid #e2e8f0;font-weight:bold;color:#0f172a">
+          ${r.departmentName}
+          ${idx === 0 ? '<br/><span style="background:#dc2626;color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;display:inline-block;margin-top:2px">PRIMARY FOCUS / मुख्य प्राथमिकता</span>' : ''}
+        </td>
         <td style="padding:10px;border:1px solid #e2e8f0;color:#334155">
           <strong>${r.issueName}</strong><br/>
           <span style="color:#0284c7;font-size:12px">${r.issueNameHindi || ''}</span>
@@ -336,12 +410,19 @@ Nanhey Park Civic Watch (नागरिक सेवा समिति)
         </div>
         <div style="padding:24px">
           <p style="font-size:15px;font-weight:bold">Respected Sir/Madam / आदरणीय महोदय/महोदया,</p>
-          <p>This is an official civic complaint regarding multiple issues at:</p>
+          <p>This is an official urgent civic complaint regarding severe civic deficiencies observed at:</p>
           <div style="background:#f0f9ff;border-left:5px solid #0284c7;padding:14px 18px;margin:16px 0;border-radius:6px">
             <p style="margin:4px 0"><strong>Location / स्थान:</strong> ${loc.address}</p>
-            <p style="margin:4px 0"><strong>GPS:</strong> ${loc.latitude}, ${loc.longitude}</p>
-            <p style="margin:4px 0"><strong>Date / समय:</strong> ${dateFormatted}, ${timeFormatted} IST</p>
+            <p style="margin:4px 0"><strong>GPS Coordinates / जीपीएस:</strong> ${loc.latitude}, ${loc.longitude}</p>
+            <p style="margin:4px 0"><strong>Date & Time / समय:</strong> ${dateFormatted}, ${timeFormatted} IST</p>
           </div>
+
+          <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:14px;margin:16px 0">
+            <h4 style="margin:0 0 4px 0;color:#991b1b;font-size:14px">🎯 PRIMARY COMPLAINT FOCUS / मुख्य प्राथमिकता की समस्या:</h4>
+            <p style="margin:0;font-size:15px;font-weight:bold;color:#7f1d1d">${primaryIssue?.issueName} (${primaryIssue?.issueNameHindi || ''})</p>
+            <p style="margin:4px 0 0 0;font-size:13px;color:#991b1b"><strong>Department Responsible:</strong> ${primaryIssue?.departmentName}</p>
+          </div>
+
           <table style="width:100%;border-collapse:collapse;margin:16px 0;font-size:13px">
             <thead>
               <tr style="background:#f1f5f9;color:#475569">
@@ -353,11 +434,12 @@ Nanhey Park Civic Watch (नागरिक सेवा समिति)
             </thead>
             <tbody>${matrixHtmlRows}</tbody>
           </table>
+
           <div style="margin-top:24px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:6px;padding:16px">
             <h4 style="margin:0 0 6px;color:#1e40af;font-size:15px">REQUEST FOR COORDINATED ACTION / त्वरित कार्रवाई का अनुरोध</h4>
             <p style="margin:0;font-size:13px;color:#1e3a8a">
-              Concerned departments are requested to coordinate and resolve immediately.<br/>
-              (संबंधित विभागों से अनुरोध है कि तुरंत समाधान कराएं।)
+              The primary concerned department (${primaryIssue?.departmentCode}) is requested to resolve the issue on top priority.<br/>
+              (मुख्य संबंधित विभाग (${primaryIssue?.departmentCode}) से अनुरोध है कि प्राथमिकता के आधार पर तुरंत समाधान कराएं।)
             </p>
           </div>
           <p style="margin-top:24px;font-size:14px">Regards / भवदीय,<br/><strong>Nanhey Park Civic Watch (नागरिक सेवा समिति)</strong></p>
@@ -365,9 +447,8 @@ Nanhey Park Civic Watch (नागरिक सेवा समिति)
       </div>
     `;
 
-    // DO NOT send back full image data URLs — they bloat the response
     const watermarkedImagesPayload = images.map((_img: string, idx: number) => ({
-      dataUrl: '', // Will be replaced by client-side watermarked images
+      dataUrl: '',
       photoIndex: idx + 1,
       caption: `Photo ${idx + 1}: ${detectedIssues.filter((i) => i.photoIndices.includes(idx + 1)).map((i) => i.issueName).join(' + ') || 'Civic Site Evidence'}`
     }));

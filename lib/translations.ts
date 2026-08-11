@@ -140,8 +140,8 @@ export const TRANSLATIONS: TranslationDictionary = {
     hi: "🗑️ कचरे का ढेर"
   },
   catRoad: {
-    en: "🛣️ Broken Road / Pothole",
-    hi: "🛣️ तोड़ी सड़क / गड्ढा"
+    en: "🛣️ Broken Road / Pothole (DSIIDC Roads)",
+    hi: "🛣️ टूटी सड़क / गड्ढा (DSIIDC विभाग)"
   },
   catLight: {
     en: "💡 Street Light Broken",
