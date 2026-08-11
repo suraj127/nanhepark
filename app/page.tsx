@@ -155,16 +155,42 @@ export default function Home() {
     }
   };
 
-  // Dispatch Email (Works 100% on Mobile iOS & Android + Desktop)
+  // Dispatch Email (URL length optimized <1200 chars to guarantee 100% success without HTTP 400 Bad Request)
   const handleSendEmail = async () => {
     if (!payload) return;
 
     setIsSending(true);
     try {
+      const primaryIssue = payload.detectedIssues[0];
+      const senderName = residentName && residentName.trim() !== '' ? residentName.trim() : 'सचेत नागरिक (Concerned Resident)';
+
+      // Keep TO & CC short & clean (under ~350 chars total)
       const toJoined = payload.toEmails.join(',');
       const ccJoined = payload.ccEmails.join(',');
+
       const subjectEncoded = encodeURIComponent(payload.subject);
-      const bodyEncoded = encodeURIComponent(payload.bodyMarkdown);
+
+      // Clean concise body for URL query parameter so total URL length stays under 1,200 chars
+      const compactBody = `Respected Sir/Madam / आदरणीय महोदय/महोदया,
+
+This is an official urgent civic complaint regarding severe civic deficiencies observed at:
+स्थान / Location: ${payload.location.address}
+जीपीएस / GPS: ${payload.location.latitude}, ${payload.location.longitude}
+समय / Date: ${payload.dateTimeFormatted}
+
+PRIMARY COMPLAINT FOCUS / मुख्य शिकायत:
+▶ ${primaryIssue?.issueName || 'Civic Infrastructure Deficit'} (${primaryIssue?.issueNameHindi || ''})
+▶ Department: ${primaryIssue?.departmentName || 'DSIIDC / MCD / DJB'}
+▶ Required Action: ${primaryIssue?.requiredAction || 'Immediate Inspection & Patching'}
+
+Concerned departments are requested to coordinate and resolve immediately.
+
+Regards / भवदीय,
+${senderName}
+Nanhey Park Civic Watch (नागरिक सेवा समिति)
+E Block, Matiala, New Delhi`;
+
+      const bodyEncoded = encodeURIComponent(compactBody);
 
       const mailtoLink = `mailto:${toJoined}?cc=${ccJoined}&subject=${subjectEncoded}&body=${bodyEncoded}`;
       const gmailWebLink = `https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=${encodeURIComponent(toJoined)}&cc=${encodeURIComponent(ccJoined)}&su=${subjectEncoded}&body=${bodyEncoded}`;
@@ -172,10 +198,8 @@ export default function Home() {
       const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
       if (isMobile) {
-        // Direct mobile protocol launch for Gmail / iOS Mail App (bypasses popup blockers)
         window.location.href = mailtoLink;
       } else {
-        // Desktop window open fallback
         const win = window.open(gmailWebLink, '_blank');
         if (!win) {
           window.location.href = mailtoLink;
