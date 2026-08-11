@@ -16,7 +16,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenDirectory, onReset }) => {
     if (isSpeaking) {
       stopSpeaking();
     } else {
-      speakText("नन्हे पार्क नागरिक पोर्टल में आपका स्वागत है। स्टेप 1: फोटो अपलोड करें। स्टेप 2: लोकेशन चेक करें। स्टेप 3: ईमेल रिपोर्ट बनाएं पर क्लिक करें।");
+      speakText("नन्हे पार्क नागरिक सेवा पोर्टल में आपका स्वागत है। स्टेप 1: समस्या की फोटो अपलोड करें। स्टेप 2: जगह की लोकेशन चेक करें। स्टेप 3: बोलकर या लिखकर समस्या बताएं और ईमेल शिकायत रिपोर्ट बनाएं पर क्लिक करें।");
     }
   };
 
@@ -50,11 +50,11 @@ export const Header: React.FC<HeaderProps> = ({ onOpenDirectory, onReset }) => {
 
         {/* Action Controls & Language Switcher */}
         <div className="flex items-center space-x-2.5">
-          {/* Audio Assistant */}
+          {/* Audio Assistant in Hindi */}
           <button
             type="button"
             onClick={handleAudioGuide}
-            title="आवाज सुनें"
+            title="आवाज में निर्देश सुनें"
             className={`flex items-center space-x-1.5 px-3 py-1.5 rounded-xl text-xs font-bold border transition-all cursor-pointer ${
               isSpeaking
                 ? 'bg-rose-50 border-rose-300 text-rose-700 animate-pulse shadow-md'
@@ -62,7 +62,7 @@ export const Header: React.FC<HeaderProps> = ({ onOpenDirectory, onReset }) => {
             }`}
           >
             {isSpeaking ? <VolumeX className="w-4 h-4 text-rose-600" /> : <Volume2 className="w-4 h-4 text-sky-600" />}
-            <span className="hidden md:inline">{isSpeaking ? 'आवाज रोकें' : '🔊 आवाज सुनें'}</span>
+            <span className="hidden md:inline">{isSpeaking ? 'आवाज रोकें' : '🔊 आवाज सुनें (हिंदी)'}</span>
           </button>
 
           {/* Clean Language Switcher (Hindi Default) */}

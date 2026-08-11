@@ -34,9 +34,9 @@ export const EmailPreviewInspector: React.FC<EmailPreviewInspectorProps> = ({
       stopSpeaking();
     } else {
       const issuesText = payload.detectedIssues
-        .map((i) => `${i.issueName} ${i.issueNameHindi ? `(${i.issueNameHindi})` : ''} at ${payload.location.address}`)
+        .map((i) => `${i.issueNameHindi || i.issueName} (${payload.location.address})`)
         .join('. ');
-      speakText(`Official Complaint Summary: ${issuesText}. Ready to dispatch to municipal authorities.`);
+      speakText(`आधिकारिक ईमेल शिकायत रिपोर्ट तैयार है। दर्ज समस्या: ${issuesText}। शिकायत अधिकारियों के पास भेजने के लिए ईमेल भेजें बटन दबाएं।`);
     }
   };
 
@@ -67,7 +67,7 @@ export const EmailPreviewInspector: React.FC<EmailPreviewInspectorProps> = ({
             }`}
           >
             {isSpeaking ? <VolumeX className="w-4 h-4 text-rose-600" /> : <Volume2 className="w-4 h-4 text-sky-600" />}
-            <span>{isSpeaking ? 'Stop Audio' : (lang === 'hi' ? '🔊 आवाज सुनें' : '🔊 Listen Audio')}</span>
+            <span>{isSpeaking ? 'आवाज रोकें' : '🔊 आवाज सुनें (हिंदी)'}</span>
           </button>
 
           <button

@@ -47,11 +47,9 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
     const cleanText = text.replace(/<[^>]*>?/gm, '');
     const utterance = new SpeechSynthesisUtterance(cleanText);
 
-    if (lang === 'hi') {
-      utterance.lang = 'hi-IN';
-    } else {
-      utterance.lang = 'en-IN';
-    }
+    // Audio instructions always in Hindi ('hi-IN')
+    utterance.lang = 'hi-IN';
+    utterance.rate = 0.95; // Slightly clear and deliberate pacing for accessibility
 
     utterance.onstart = () => setIsSpeaking(true);
     utterance.onend = () => setIsSpeaking(false);

@@ -1,9 +1,8 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
-import { Camera, Upload, MapPin, Trash2, Plus, RefreshCw, FileText, Mic, MicOff, Volume2, AlertCircle } from 'lucide-react';
-import { LocationData, SampleScenario } from '@/lib/types';
-import { SAMPLE_CIVIC_SCENARIOS } from '@/lib/sample-scenarios';
+import { Camera, Upload, MapPin, Trash2, Plus, RefreshCw, Mic, MicOff, Volume2, AlertCircle } from 'lucide-react';
+import { LocationData } from '@/lib/types';
 import { useLanguage } from '@/lib/LanguageContext';
 import { TRANSLATIONS } from '@/lib/translations';
 
@@ -122,24 +121,17 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     onImagesChange(updated);
   };
 
-  // Load Preset
-  const handleLoadPreset = (scenario: SampleScenario) => {
-    onImagesChange(scenario.imageUrls);
-    onLocationChange(scenario.location);
-    onUserNoteChange(`Observed issues: ${scenario.expectedIssues.join(', ')}.`);
-  };
-
   // Add Quick Category Chip to notes
   const handleAddCategoryChip = (categoryText: string) => {
     if (userNote.includes(categoryText)) return;
-    const updated = userNote ? `${userNote}. Issue: ${categoryText}` : `Issue: ${categoryText}`;
+    const updated = userNote ? `${userNote}. समस्या: ${categoryText}` : `समस्या: ${categoryText}`;
     onUserNoteChange(updated);
   };
 
   // Detect GPS
   const handleDetectGps = () => {
     if (!navigator.geolocation) {
-      alert('Geolocation is not supported by your browser.');
+      alert('आपके ब्राउज़र में जीपीएस सपोर्ट नहीं है।');
       return;
     }
     setIsDetectingGps(true);
@@ -177,22 +169,13 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               SEE • CLICK • REPORT • CHANGE
             </h2>
             <p className="text-xs sm:text-sm font-bold text-sky-800">
-              Your Photo. Their Action. — Nanhey Park Civic Watch
+              आपकी फोटो। अधिकारियों की कार्रवाई। — नन्हे पार्क नागरिक सेवा
             </p>
             <p className="text-xs text-slate-600 font-medium">
-              E Block, Matiala, New Delhi • Official Multi-Department Reporting
+              ई ब्लॉक, मटियाला, नई दिल्ली • एकीकृत शिकायत प्रणाली
             </p>
           </div>
         </div>
-
-        <button
-          type="button"
-          onClick={() => handleLoadPreset(SAMPLE_CIVIC_SCENARIOS[0])}
-          className="inline-flex items-center space-x-1.5 px-4 py-2.5 rounded-xl bg-white/90 hover:bg-white text-slate-900 border border-slate-300/80 text-xs font-bold shadow-xs transition cursor-pointer shrink-0 hover:scale-[1.02]"
-        >
-          <FileText className="w-4 h-4 text-sky-600" />
-          <span>{lang === 'hi' ? 'सैंपल फोटो लोड करें' : 'Load Sample Photo / टेस्ट करें'}</span>
-        </button>
       </div>
 
       {/* STEP 1: PHOTO UPLOAD */}
@@ -204,9 +187,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               <span>
                 {lang === 'hi'
                   ? TRANSLATIONS.step1Title.hi
-                  : lang === 'en'
-                  ? TRANSLATIONS.step1Title.en
-                  : '1. Photo Upload / फोटो खींचें या चुनें'}
+                  : TRANSLATIONS.step1Title.en}
               </span>
             </h2>
             <p className="text-xs text-slate-500 mt-1 pl-9 font-medium">
@@ -216,11 +197,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
 
           <button
             type="button"
-            onClick={() => speakText("Step 1: Upload photos of sewer, garbage, broken road, or light.")}
-            className="self-start sm:self-center text-xs text-sky-600 hover:text-sky-800 flex items-center gap-1 font-bold"
+            onClick={() => speakText("स्टेप 1: सड़क, पानी, कचरा या खराब लाइट की फोटो खींचें या गैलरी से अपलोड करें।")}
+            className="self-start sm:self-center text-xs text-sky-600 hover:text-sky-800 flex items-center gap-1 font-bold cursor-pointer"
           >
             <Volume2 className="w-4 h-4" />
-            <span>{lang === 'hi' ? 'निर्देश सुनें' : 'Listen Instructions'}</span>
+            <span>{lang === 'hi' ? 'आवाज में निर्देश सुनें' : 'Listen Instructions'}</span>
           </button>
         </div>
 
@@ -257,7 +238,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             </div>
             <div>
               <h3 className="text-base font-extrabold text-slate-900">
-                {lang === 'hi' ? 'फोटो अपलोड करें या कैमरा चालू करें' : 'Add Photo Evidence / फोटो अपलोड करें'}
+                {lang === 'hi' ? 'फोटो अपलोड करें या कैमरा चालू करें' : 'Add Photo Evidence'}
               </h3>
               <p className="text-xs text-slate-500 max-w-md mx-auto mt-1 font-medium">
                 {lang === 'hi'
@@ -363,9 +344,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             <span>
               {lang === 'hi'
                 ? TRANSLATIONS.step2Title.hi
-                : lang === 'en'
-                ? TRANSLATIONS.step2Title.en
-                : '2. Incident Location / समस्या की जगह'}
+                : TRANSLATIONS.step2Title.en}
             </span>
           </h2>
           <button
@@ -386,7 +365,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <div className="md:col-span-2">
             <label className="block text-[11px] font-bold text-slate-600 mb-1 uppercase tracking-wider">
-              {lang === 'hi' ? 'पता / लैंडमार्क' : 'Address / Landmark / पता'}
+              {lang === 'hi' ? 'पता / लैंडमार्क' : 'Address / Landmark'}
             </label>
             <input
               type="text"
@@ -433,9 +412,7 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
             <span>
               {lang === 'hi'
                 ? TRANSLATIONS.step3Title.hi
-                : lang === 'en'
-                ? TRANSLATIONS.step3Title.en
-                : '3. Speak or Write Problem / बोलकर या लिखकर समस्या बताएं'}
+                : TRANSLATIONS.step3Title.en}
             </span>
           </h2>
 
