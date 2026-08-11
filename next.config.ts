@@ -15,15 +15,20 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'picsum.photos',
         port: '',
-        pathname: '/**', // This allows any path under the hostname
+        pathname: '/**',
       },
     ],
+  },
+  // Increase API body size limit for base64 image uploads (up to 50MB)
+  serverExternalPackages: [],
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '50mb',
+    },
   },
   output: 'standalone',
   transpilePackages: ['motion'],
   webpack: (config, {dev}) => {
-    // HMR is disabled in AI Studio via DISABLE_HMR env var.
-    // Do not modifyâfile watching is disabled to prevent flickering during agent edits.
     if (dev && process.env.DISABLE_HMR === 'true') {
       config.watchOptions = {
         ignored: /.*/,

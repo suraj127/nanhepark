@@ -4,6 +4,18 @@ import { buildCombinedRecipientList, OFFICIAL_DEPARTMENT_DIRECTORY } from '@/lib
 import { Type } from '@google/genai';
 import { CombinedEmailPayload, DetectedIssue, LocationData } from '@/lib/types';
 
+// Increase body size limit for base64 image uploads
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+  },
+};
+
+// Next.js App Router segment config
+export const maxDuration = 60;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
@@ -295,7 +307,7 @@ INSTRUCTIONS:
     // Determine Subject Line in English + Hindi
     const hasHighSeverity = detectedIssues.some((i) => i.severity === 'HIGH');
     const locationShort = loc.area ? `${loc.area}, ${loc.city}` : loc.address;
-    const subjectPrefix = hasHasSeverity(hasHighSeverity)
+    const subjectPrefix = hasHighSeverity
       ? 'URGENT / अति आवश्यक: Civic Complaint Report'
       : 'Civic Complaint Report / नागरिक शिकायत पत्र';
     const emailSubject = `${subjectPrefix} — ${locationShort}`;
@@ -470,6 +482,4 @@ Regards / भवदीय,
   }
 }
 
-function hasHasSeverity(isHigh: boolean): boolean {
-  return isHigh;
-}
+

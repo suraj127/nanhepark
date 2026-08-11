@@ -38,6 +38,38 @@ export default function Home() {
   const [isDirectoryOpen, setIsDirectoryOpen] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Compress image to reduce payload size before sending to API
+  const compressImage = (dataUrl: string, maxWidth: number = 1200, quality: number = 0.7): Promise<string> => {
+    return new Promise((resolve) => {
+      // Safety timeout fallback
+      const timer = setTimeout(() => resolve(dataUrl), 3000);
+
+      try {
+        const img = new Image();
+        img.onload = () => {
+          clearTimeout(timer);
+          try {
+            const canvas = document.createElement('canvas');
+            const scale = Math.min(1, maxWidth / img.width);
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) { resolve(dataUrl); return; }
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          } catch {
+            resolve(dataUrl);
+          }
+        };
+        img.onerror = () => { clearTimeout(timer); resolve(dataUrl); };
+        img.src = dataUrl;
+      } catch {
+        clearTimeout(timer);
+        resolve(dataUrl);
+      }
+    });
+  };
+
   // Submit & Run Multi-Issue Analysis
   const handleAnalyzeAndGenerateEmail = async () => {
     if (selectedImages.length === 0) return;
@@ -47,7 +79,7 @@ export default function Home() {
     setDetectionStep(1); // Watermarking
 
     try {
-      // Step 1: Watermarking images
+      // Step 1: Watermarking images for display & proof
       const now = new Date();
       const istDate = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', timeZone: 'Asia/Kolkata' });
       const istTime = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, timeZone: 'Asia/Kolkata' });
@@ -68,23 +100,43 @@ export default function Home() {
         }
       }
 
-      // Step 2: Call Gemini Vision API / Smart Rules
+      // Step 2: Compress images for API transmission (smaller payload)
       setDetectionStep(2);
+      const compressedImages: string[] = [];
+      for (const img of selectedImages) {
+        try {
+          const compressed = await compressImage(img, 1024, 0.6);
+          compressedImages.push(compressed);
+        } catch {
+          compressedImages.push(img);
+        }
+      }
+
+      // Step 3: Call detect-issues API with compressed images
       const res = await fetch('/api/detect-issues', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          images: watermarkedList,
+          images: compressedImages,
           location,
           userNote
         })
       });
 
       setDetectionStep(3); // Dept mapping & deduplication
-      const data = await res.json().catch(() => ({ error: 'Invalid response from server' }));
+      const data = await res.json().catch(() => ({ error: 'सर्वर से अमान्य प्रतिक्रिया (Invalid response from server)' }));
 
       if (!res.ok || !data.payload) {
-        throw new Error(formatErrorMessage(data.error, 'Failed to generate email report.'));
+        throw new Error(formatErrorMessage(data.error, 'ईमेल रिपोर्ट बनाने में त्रुटि हुई। कृपया दोबारा प्रयास करें।'));
+      }
+
+      // Replace API's compressed images with watermarked display images
+      if (data.payload.watermarkedImages && watermarkedList.length > 0) {
+        data.payload.watermarkedImages = watermarkedList.map((wm: string, idx: number) => ({
+          dataUrl: wm,
+          photoIndex: idx + 1,
+          caption: data.payload.watermarkedImages[idx]?.caption || `Photo ${idx + 1}: Civic Evidence`
+        }));
       }
 
       setDetectionStep(4); // Payload generated
@@ -94,37 +146,43 @@ export default function Home() {
       }, 400);
     } catch (err: any) {
       console.error('Analysis error:', err);
-      setErrorMessage(formatErrorMessage(err, 'An error occurred while compiling your report. Please try again.'));
+      setErrorMessage(formatErrorMessage(err, 'रिपोर्ट बनाते समय त्रुटि हुई। कृपया दोबारा प्रयास करें।'));
       setIsProcessing(false);
     }
   };
 
-  // Dispatch Email
+  // Dispatch Email via mailto / Gmail link
   const handleSendEmail = async () => {
     if (!payload) return;
 
     setIsSending(true);
     try {
-      const res = await fetch('/api/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ payload })
-      });
+      // Build mailto link directly on the client for instant email dispatch
+      const toJoined = payload.toEmails.join(',');
+      const ccJoined = payload.ccEmails.join(',');
+      const subjectEncoded = encodeURIComponent(payload.subject);
+      const bodyEncoded = encodeURIComponent(payload.bodyMarkdown);
 
-      const data = await res.json().catch(() => ({ error: 'Failed to parse response' }));
-      if (!res.ok) {
-        throw new Error(formatErrorMessage(data.error, 'Failed to send email.'));
+      const gmailWebLink = `https://mail.google.com/mail/?view=cm&fs=1&tf=1&to=${encodeURIComponent(toJoined)}&cc=${encodeURIComponent(ccJoined)}&su=${subjectEncoded}&body=${bodyEncoded}`;
+      const mailtoLink = `mailto:${toJoined}?cc=${ccJoined}&subject=${subjectEncoded}&body=${bodyEncoded}`;
+
+      // Try opening Gmail web link first, fallback to mailto
+      const gmailWindow = window.open(gmailWebLink, '_blank');
+      if (!gmailWindow) {
+        window.location.href = mailtoLink;
       }
 
+      const dispatchId = `CIVIC-DISPATCH-${Date.now().toString(36).toUpperCase()}`;
+      
       setDispatchResult({
-        dispatchId: data.dispatchId || `DISPATCH-${Date.now().toString().slice(-6)}`,
-        gmailWebLink: data.links?.gmailWebLink || ''
+        dispatchId,
+        gmailWebLink
       });
       setIsSending(false);
       setIsSuccess(true);
     } catch (err: any) {
       console.error('Dispatch error:', err);
-      setErrorMessage(formatErrorMessage(err, 'Error sending official email.'));
+      setErrorMessage(formatErrorMessage(err, 'ईमेल भेजने में त्रुटि। कृपया दोबारा प्रयास करें।'));
       setIsSending(false);
     }
   };
@@ -200,7 +258,7 @@ export default function Home() {
             <span>Nanhey Park Civic Watch • नागरिक सेवा पोर्टल</span>
           </p>
           <p className="text-[11px] text-slate-400 font-medium">
-            Multi-Department Email Reporting System • Dual Language (English + हिंदी)
+            एकीकृत विभागीय ईमेल शिकायत प्रणाली • हिंदी + English
           </p>
         </div>
       </footer>
