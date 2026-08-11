@@ -1,0 +1,6 @@
+{
+  "name": "Single-Email Multi-Department Civic Reporting System",
+  "description": "AI-powered civic complaint system that detects multiple issues across departments from uploaded photos and dispatches ONE consolidated email to all relevant authorities.",
+  "requestFramePermissions": ["camera", "geolocation"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
