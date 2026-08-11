@@ -44,36 +44,36 @@ export async function POST(req: NextRequest) {
     const hasApiKey = Boolean(process.env.GEMINI_API_KEY && process.env.GEMINI_API_KEY.trim() !== '');
 
     // ----------------------------------------------------
-    // MODE 1: Gemini AI Vision Detection (if API key available)
+    // MODE 1: Gemini AI Vision Detection (with multi-model fallback)
     // ----------------------------------------------------
     if (hasApiKey) {
-      try {
-        const ai = getGeminiClient();
-        const parts: any[] = [];
+      const modelsToTry = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+      const ai = getGeminiClient();
+      const parts: any[] = [];
 
-        images.forEach((imgDataUrl: string) => {
-          let mimeType = 'image/jpeg';
-          let base64Data = imgDataUrl;
+      images.forEach((imgDataUrl: string) => {
+        let mimeType = 'image/jpeg';
+        let base64Data = imgDataUrl;
 
-          if (imgDataUrl.startsWith('data:')) {
-            const matches = imgDataUrl.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
-            if (matches) {
-              mimeType = matches[1];
-              base64Data = matches[2];
-            } else {
-              base64Data = imgDataUrl.split(',')[1] || imgDataUrl;
-            }
+        if (imgDataUrl.startsWith('data:')) {
+          const matches = imgDataUrl.match(/^data:(image\/[a-zA-Z+]+);base64,(.+)$/);
+          if (matches) {
+            mimeType = matches[1];
+            base64Data = matches[2];
+          } else {
+            base64Data = imgDataUrl.split(',')[1] || imgDataUrl;
           }
+        }
 
-          parts.push({
-            inlineData: {
-              mimeType: mimeType,
-              data: base64Data
-            }
-          });
+        parts.push({
+          inlineData: {
+            mimeType: mimeType,
+            data: base64Data
+          }
         });
+      });
 
-        const promptText = `
+      const promptText = `
 You are an expert AI civic inspector for Delhi Civic Watch.
 Analyze the provided photographic evidence (${images.length} photo(s)) carefully.
 
@@ -102,69 +102,72 @@ INSTRUCTIONS:
 6. Return structured JSON array.
 `;
 
-        parts.push({ text: promptText });
+      parts.push({ text: promptText });
 
-        const response = await ai.models.generateContent({
-          model: 'gemini-3.6-flash',
-          contents: { parts },
-          config: {
-            systemInstruction: 'You are an AI Civic Issue Detector. Return structured JSON matching schema with Hindi translations.',
-            responseMimeType: 'application/json',
-            responseSchema: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: { type: Type.STRING },
-                  issueName: { type: Type.STRING },
-                  issueNameHindi: { type: Type.STRING },
-                  departmentCode: { type: Type.STRING, description: 'One of DJB, MCD, ELECTRICAL, PWD, TRAFFIC' },
-                  departmentName: { type: Type.STRING },
-                  severity: { type: Type.STRING, description: 'HIGH, MEDIUM, or LOW' },
-                  observation: { type: Type.STRING },
-                  observationHindi: { type: Type.STRING },
-                  requiredAction: { type: Type.STRING },
-                  requiredActionHindi: { type: Type.STRING },
-                  photoIndices: {
-                    type: Type.ARRAY,
-                    items: { type: Type.INTEGER }
-                  }
-                },
-                required: ['issueName', 'departmentCode', 'departmentName', 'severity', 'observation', 'requiredAction']
+      for (const modelName of modelsToTry) {
+        try {
+          const response = await ai.models.generateContent({
+            model: modelName,
+            contents: { parts },
+            config: {
+              systemInstruction: 'You are an AI Civic Issue Detector. Return structured JSON matching schema with Hindi translations.',
+              responseMimeType: 'application/json',
+              responseSchema: {
+                type: Type.ARRAY,
+                items: {
+                  type: Type.OBJECT,
+                  properties: {
+                    id: { type: Type.STRING },
+                    issueName: { type: Type.STRING },
+                    issueNameHindi: { type: Type.STRING },
+                    departmentCode: { type: Type.STRING, description: 'One of DJB, MCD, ELECTRICAL, PWD, TRAFFIC' },
+                    departmentName: { type: Type.STRING },
+                    severity: { type: Type.STRING, description: 'HIGH, MEDIUM, or LOW' },
+                    observation: { type: Type.STRING },
+                    observationHindi: { type: Type.STRING },
+                    requiredAction: { type: Type.STRING },
+                    requiredActionHindi: { type: Type.STRING },
+                    photoIndices: {
+                      type: Type.ARRAY,
+                      items: { type: Type.INTEGER }
+                    }
+                  },
+                  required: ['issueName', 'departmentCode', 'departmentName', 'severity', 'observation', 'requiredAction']
+                }
               }
             }
-          }
-        });
+          });
 
-        if (response.text) {
-          const parsed = JSON.parse(response.text.trim());
-          if (Array.isArray(parsed) && parsed.length > 0) {
-            detectedIssues = parsed.map((item, idx) => ({
-              id: item.id || `issue-${idx + 1}`,
-              issueName: item.issueName || 'Civic Deficiency',
-              issueNameHindi: item.issueNameHindi || 'नागरिक समस्या',
-              departmentCode: (item.departmentCode || 'MCD').toUpperCase(),
-              departmentName: item.departmentName || OFFICIAL_DEPARTMENT_DIRECTORY[item.departmentCode]?.departmentName || 'Municipal Authority',
-              severity: (item.severity || 'MEDIUM').toUpperCase() as 'HIGH' | 'MEDIUM' | 'LOW',
-              observation: item.observation || 'Observed civic non-compliance on public roadway.',
-              observationHindi: item.observationHindi || 'सार्वजनिक मार्ग पर समस्या पाई गई है।',
-              requiredAction: item.requiredAction || 'Kindly inspect and rectify immediately.',
-              requiredActionHindi: item.requiredActionHindi || 'कृपया तुरंत निरीक्षण कर समाधान करें।',
-              photoIndices: Array.isArray(item.photoIndices) && item.photoIndices.length > 0 ? item.photoIndices : [1]
-            }));
+          if (response.text) {
+            const parsed = JSON.parse(response.text.trim());
+            if (Array.isArray(parsed) && parsed.length > 0) {
+              detectedIssues = parsed.map((item, idx) => ({
+                id: item.id || `issue-${idx + 1}`,
+                issueName: item.issueName || 'Civic Deficiency',
+                issueNameHindi: item.issueNameHindi || 'नागरिक समस्या',
+                departmentCode: (item.departmentCode || 'MCD').toUpperCase(),
+                departmentName: item.departmentName || OFFICIAL_DEPARTMENT_DIRECTORY[item.departmentCode]?.departmentName || 'Municipal Authority',
+                severity: (item.severity || 'MEDIUM').toUpperCase() as 'HIGH' | 'MEDIUM' | 'LOW',
+                observation: item.observation || 'Observed civic non-compliance on public roadway.',
+                observationHindi: item.observationHindi || 'सार्वजनिक मार्ग पर समस्या पाई गई है।',
+                requiredAction: item.requiredAction || 'Kindly inspect and rectify immediately.',
+                requiredActionHindi: item.requiredActionHindi || 'कृपया तुरंत निरीक्षण कर समाधान करें।',
+                photoIndices: Array.isArray(item.photoIndices) && item.photoIndices.length > 0 ? item.photoIndices : [1]
+              }));
+              break; // Successfully got AI output
+            }
           }
+        } catch (modelErr) {
+          console.warn(`Gemini vision model (${modelName}) attempt failed, trying fallback:`, modelErr);
         }
-      } catch (aiErr) {
-        console.warn('AI call failed or bypassed, switching to Rule-Based Mode:', aiErr);
       }
     }
 
     // ----------------------------------------------------
-    // MODE 2: Smart Rule-Based Detection (WITHOUT AI)
+    // MODE 2: Smart Rule-Based Detection (If AI key is missing or calls fail)
     // ----------------------------------------------------
     if (detectedIssues.length === 0) {
       const noteLower = (userNote || '').toLowerCase();
-      
       const potentialIssues: DetectedIssue[] = [];
 
       // Check Rule 1: DJB (Water / Sewer)
@@ -292,7 +295,7 @@ INSTRUCTIONS:
     // Determine Subject Line in English + Hindi
     const hasHighSeverity = detectedIssues.some((i) => i.severity === 'HIGH');
     const locationShort = loc.area ? `${loc.area}, ${loc.city}` : loc.address;
-    const subjectPrefix = hasHighSeverity
+    const subjectPrefix = hasHasSeverity(hasHighSeverity)
       ? 'URGENT / अति आवश्यक: Civic Complaint Report'
       : 'Civic Complaint Report / नागरिक शिकायत पत्र';
     const emailSubject = `${subjectPrefix} — ${locationShort}`;
@@ -426,7 +429,7 @@ Regards / भवदीय,
             </tbody>
           </table>
 
-          <div style="margin-top: 24px; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px;">
+          <div style="margin-top: 24px; background-color: #eff6ff; border: 1px solid #bfdbfe; border-radius: 6px; padding: 16px;">
             <h4 style="margin: 0 0 6px 0; color: #1e40af; font-size: 15px;">REQUEST FOR COORDINATED ACTION / त्वरित कार्रवाई का अनुरोध</h4>
             <p style="margin: 0; font-size: 13px; color: #1e3a8a;">
               As multiple civic issues have been observed at the same location, concerned departments are requested to coordinate and fix them immediately.<br/>
@@ -465,4 +468,8 @@ Regards / भवदीय,
     console.error('Error in /api/detect-issues:', error);
     return NextResponse.json({ error: error.message || 'Failed to detect issues and generate email.' }, { status: 500 });
   }
+}
+
+function hasHasSeverity(isHigh: boolean): boolean {
+  return isHigh;
 }
