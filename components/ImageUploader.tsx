@@ -19,6 +19,45 @@ interface ImageUploaderProps {
   isProcessing: boolean;
 }
 
+// Compress raw mobile photo files down to 800px JPEG (~80KB) on client side for instant preview and zero memory crashes
+const compressFileForMobile = (file: File): Promise<string> => {
+  return new Promise((resolve) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const dataUrl = e.target?.result as string;
+      if (!dataUrl) { resolve(''); return; }
+
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const canvas = document.createElement('canvas');
+          const MAX_DIM = 800;
+          let scale = 1;
+          const origW = img.width || 800;
+          const origH = img.height || 600;
+
+          if (origW > MAX_DIM || origH > MAX_DIM) {
+            scale = Math.min(MAX_DIM / origW, MAX_DIM / origH);
+          }
+
+          canvas.width = Math.round(origW * scale);
+          canvas.height = Math.round(origH * scale);
+          const ctx = canvas.getContext('2d');
+          if (!ctx) { resolve(dataUrl); return; }
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL('image/jpeg', 0.65));
+        } catch {
+          resolve(dataUrl);
+        }
+      };
+      img.onerror = () => resolve(dataUrl);
+      img.src = dataUrl;
+    };
+    reader.onerror = () => resolve('');
+    reader.readAsDataURL(file);
+  });
+};
+
 export const ImageUploader: React.FC<ImageUploaderProps> = ({
   selectedImages,
   onImagesChange,
@@ -102,31 +141,20 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
     }
   };
 
-  // File Upload Handler (Async Promise.all for instant preview display)
+  // File Upload Handler (Mobile & Safari Safe with auto-compression)
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     const fileList = Array.from(files);
-    const readPromises = fileList.map((file) => {
-      return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            resolve(event.target.result as string);
-          } else {
-            resolve('');
-          }
-        };
-        reader.onerror = () => resolve('');
-        reader.readAsDataURL(file);
-      });
-    });
+    const readPromises = fileList.map((file) => compressFileForMobile(file));
 
     const newImages = (await Promise.all(readPromises)).filter((url) => url !== '');
     if (newImages.length > 0) {
       onImagesChange([...selectedImages, ...newImages]);
     }
+    // Clear input value so re-selecting photos works on mobile
+    e.target.value = '';
   };
 
   // Remove Photo
@@ -244,11 +272,11 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
           </div>
         </div>
 
-        {/* Upload Box / Thumbnails */}
+        {/* Upload Box / Thumbnails (Mobile-First HTML Label Triggers) */}
         {selectedImages.length === 0 ? (
-          <div className="border-3 border-dashed border-sky-200/80 hover:border-sky-500 rounded-3xl p-8 sm:p-10 text-center bg-sky-50/30 backdrop-blur-md transition-all space-y-4 shadow-inner">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 text-white flex items-center justify-center shadow-lg shadow-sky-500/20">
-              <Camera className="w-8 h-8" />
+          <div className="border-3 border-dashed border-sky-200/80 hover:border-sky-500 rounded-3xl p-6 sm:p-10 text-center bg-sky-50/30 backdrop-blur-md transition-all space-y-4 shadow-inner">
+            <div className="w-14 h-14 sm:w-16 sm:h-16 mx-auto rounded-2xl bg-gradient-to-br from-sky-400 to-blue-600 text-white flex items-center justify-center shadow-lg shadow-sky-500/20">
+              <Camera className="w-7 h-7 sm:w-8 sm:h-8" />
             </div>
             <div>
               <h3 className="text-base font-extrabold text-slate-900">
@@ -261,39 +289,42 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               </p>
             </div>
 
+            {/* Native Mobile HTML Labels directly tied to inputs for 100% reliable mobile touch trigger */}
             <div className="flex flex-wrap items-center justify-center gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => cameraInputRef.current?.click()}
-                className="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center space-x-2 transition shadow-md cursor-pointer hover:scale-[1.02] min-h-[44px]"
+              <label
+                htmlFor="mobile-camera-input"
+                className="px-5 py-3 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs sm:text-sm flex items-center space-x-2 transition shadow-md cursor-pointer hover:scale-[1.02] min-h-[46px] select-none active:bg-slate-950"
               >
                 <Camera className="w-4 h-4 text-sky-400" />
                 <span>{lang === 'hi' ? TRANSLATIONS.takePhoto.hi : TRANSLATIONS.takePhoto.en}</span>
-              </button>
+              </label>
 
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="px-5 py-3 rounded-2xl bg-white/90 hover:bg-white text-slate-900 border border-slate-300 font-bold text-xs sm:text-sm flex items-center space-x-2 transition shadow-sm cursor-pointer hover:scale-[1.02] min-h-[44px]"
+              <label
+                htmlFor="mobile-gallery-input"
+                className="px-5 py-3 rounded-2xl bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 font-bold text-xs sm:text-sm flex items-center space-x-2 transition shadow-sm cursor-pointer hover:scale-[1.02] min-h-[46px] select-none active:bg-slate-100"
               >
                 <Upload className="w-4 h-4 text-slate-600" />
                 <span>{lang === 'hi' ? TRANSLATIONS.browseFiles.hi : TRANSLATIONS.browseFiles.en}</span>
-              </button>
+              </label>
             </div>
 
+            {/* Hidden Input Elements */}
             <input
+              id="mobile-gallery-input"
               ref={fileInputRef}
               type="file"
               accept="image/*"
               multiple
-              className="hidden"
+              className="sr-only"
               onChange={handleFileSelect}
             />
             <input
+              id="mobile-camera-input"
               ref={cameraInputRef}
               type="file"
               accept="image/*"
-              className="hidden"
+              capture="environment"
+              className="sr-only"
               onChange={handleFileSelect}
             />
           </div>
@@ -303,20 +334,19 @@ export const ImageUploader: React.FC<ImageUploaderProps> = ({
               <span className="text-xs sm:text-sm font-extrabold text-slate-900">
                 {lang === 'hi' ? TRANSLATIONS.selectedPhotos.hi : TRANSLATIONS.selectedPhotos.en} ({selectedImages.length})
               </span>
-              <button
-                type="button"
-                onClick={() => fileInputRef.current?.click()}
-                className="px-4 py-2 rounded-xl bg-white/90 hover:bg-white text-slate-900 border border-slate-300 text-xs font-bold flex items-center space-x-1.5 cursor-pointer shadow-2xs min-h-[40px]"
+              <label
+                htmlFor="mobile-add-more-input"
+                className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-900 border border-slate-300 text-xs font-bold flex items-center space-x-1.5 cursor-pointer shadow-2xs min-h-[40px] select-none"
               >
                 <Plus className="w-4 h-4 text-sky-600" />
                 <span>{lang === 'hi' ? TRANSLATIONS.addMorePhotos.hi : TRANSLATIONS.addMorePhotos.en}</span>
-              </button>
+              </label>
               <input
-                ref={fileInputRef}
+                id="mobile-add-more-input"
                 type="file"
                 accept="image/*"
                 multiple
-                className="hidden"
+                className="sr-only"
                 onChange={handleFileSelect}
               />
             </div>
