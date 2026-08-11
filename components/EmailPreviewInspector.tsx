@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Mail, Check, Copy, ArrowRight, Table, Paperclip, FileText, ArrowLeft, Volume2, VolumeX } from 'lucide-react';
+import { Mail, Check, Copy, ArrowRight, Table, Paperclip, FileText, ArrowLeft, Volume2, VolumeX, Download, Info } from 'lucide-react';
 import { CombinedEmailPayload } from '@/lib/types';
 import { useLanguage } from '@/lib/LanguageContext';
 import { TRANSLATIONS } from '@/lib/translations';
@@ -36,8 +36,19 @@ export const EmailPreviewInspector: React.FC<EmailPreviewInspectorProps> = ({
       const issuesText = payload.detectedIssues
         .map((i) => `${i.issueNameHindi || i.issueName} (${payload.location.address})`)
         .join('. ');
-      speakText(`आधिकारिक ईमेल शिकायत रिपोर्ट तैयार है। दर्ज समस्या: ${issuesText}। शिकायत अधिकारियों के पास भेजने के लिए ईमेल भेजें बटन दबाएं।`);
+      speakText(`आधिकारिक ईमेल शिकायत रिपोर्ट तैयार है। दर्ज समस्या: ${issuesText}। जीमेल में फोटो अटैच करने के लिए नीचे दिए फोटो डाउनलोड बटन दबाएं और जीमेल में अटैच पिन दबाकर जोड़ें।`);
     }
+  };
+
+  // Download watermarked photo helper
+  const handleDownloadPhoto = (dataUrl: string, index: number) => {
+    if (!dataUrl) return;
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `Civic_Evidence_Photo_${index + 1}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   return (
@@ -100,18 +111,18 @@ export const EmailPreviewInspector: React.FC<EmailPreviewInspectorProps> = ({
           <span className="font-extrabold text-slate-600 w-12 shrink-0 pt-0.5">TO (प्राप्तकर्ता):</span>
           <div className="flex flex-wrap gap-1.5">
             {payload.toEmails.map((email, idx) => (
-              <span key={idx} className="glass-badge text-sky-950 px-2.5 py-0.5 rounded-lg text-[11px] font-mono font-bold shadow-2xs">
+              <span key={idx} className="bg-sky-100/80 text-sky-950 font-bold px-2.5 py-1 rounded-md border border-sky-200 text-[11px]">
                 {email}
               </span>
             ))}
           </div>
         </div>
 
-        <div className="flex items-start space-x-2">
+        <div className="flex items-start space-x-2 pt-1">
           <span className="font-extrabold text-slate-600 w-12 shrink-0 pt-0.5">CC (प्रतिलिपि):</span>
-          <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-2">
+          <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
             {payload.ccEmails.map((email, idx) => (
-              <span key={idx} className="bg-slate-100/80 border border-slate-200 text-slate-700 px-2 py-0.5 rounded-lg text-[11px] font-mono font-medium">
+              <span key={idx} className="bg-slate-100 text-slate-700 font-semibold px-2 py-0.5 rounded border border-slate-200 text-[10px]">
                 {email}
               </span>
             ))}
@@ -119,32 +130,35 @@ export const EmailPreviewInspector: React.FC<EmailPreviewInspectorProps> = ({
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex border-b border-slate-200/70 bg-slate-100/50 px-4 pt-2">
+      {/* Tab Controls */}
+      <div className="px-6 pt-4 bg-slate-50/50 flex space-x-4 border-b border-slate-200/70">
         <button
           onClick={() => setActiveTab('preview')}
-          className={`px-4 py-2.5 text-xs sm:text-sm font-extrabold border-b-2 transition-all flex items-center space-x-2 cursor-pointer ${
-            activeTab === 'preview' ? 'border-sky-600 text-sky-900' : 'border-transparent text-slate-500 hover:text-slate-800'
+          className={`pb-3 text-xs sm:text-sm font-extrabold flex items-center gap-2 border-b-2 transition cursor-pointer ${
+            activeTab === 'preview'
+              ? 'border-sky-600 text-sky-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
           <FileText className="w-4 h-4" />
-          <span>{lang === 'hi' ? TRANSLATIONS.tabEmailContent.hi : TRANSLATIONS.tabEmailContent.en}</span>
+          <span>{lang === 'hi' ? 'ईमेल का प्रारूप (Official Email Draft)' : 'Official Email Draft'}</span>
         </button>
+
         <button
           onClick={() => setActiveTab('matrix')}
-          className={`px-4 py-2.5 text-xs sm:text-sm font-extrabold border-b-2 transition-all flex items-center space-x-2 cursor-pointer ${
-            activeTab === 'matrix' ? 'border-sky-600 text-sky-900' : 'border-transparent text-slate-500 hover:text-slate-800'
+          className={`pb-3 text-xs sm:text-sm font-extrabold flex items-center gap-2 border-b-2 transition cursor-pointer ${
+            activeTab === 'matrix'
+              ? 'border-sky-600 text-sky-600'
+              : 'border-transparent text-slate-500 hover:text-slate-800'
           }`}
         >
           <Table className="w-4 h-4" />
-          <span>
-            {lang === 'hi' ? TRANSLATIONS.tabDeptMatrix.hi : TRANSLATIONS.tabDeptMatrix.en} ({payload.departmentMatrix.length})
-          </span>
+          <span>{lang === 'hi' ? 'विभाग सूची (Department Matrix)' : 'Department Matrix'}</span>
         </button>
       </div>
 
       {/* Content Area */}
-      <div className="p-6 bg-slate-50/50 backdrop-blur-md">
+      <div className="p-6 bg-slate-50/30">
         {activeTab === 'preview' && (
           <div className="space-y-6">
             {/* Rendered Email Body */}
@@ -153,21 +167,57 @@ export const EmailPreviewInspector: React.FC<EmailPreviewInspectorProps> = ({
               dangerouslySetInnerHTML={{ __html: payload.bodyHtml }}
             />
 
+            {/* Photo Attachment Help Banner */}
+            <div className="bg-amber-50/90 border border-amber-200/90 rounded-2xl p-4 flex items-start space-x-3 text-xs text-amber-900 shadow-xs">
+              <Info className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="font-extrabold text-amber-950">
+                  {lang === 'hi' ? '📌 फोटो ईमेल में कैसे जोड़ें (Photo Attachment Guide):' : '📌 Photo Attachment Instructions:'}
+                </p>
+                <p className="font-medium text-amber-900 leading-relaxed">
+                  {lang === 'hi'
+                    ? 'इंटरनेट सुरक्षा नियमों के कारण कोई भी वेबसाइट फोन से फोटो अपने आप अटैच नहीं कर सकती। नीचे दिए "फोटो डाउनलोड करें" बटन को दबाएं, फिर जीमेल खुलने पर अटैच पिन (📎) दबाकर डाउनलोड की गई वाटरमार्क फोटो जोड़ें।'
+                    : 'Web security rules prevent websites from auto-attaching local files. Click "Download Photo" below, then tap the attachment pin (📎) in Gmail to attach it.'}
+                </p>
+              </div>
+            </div>
+
             {/* Attached Watermarked Photographs */}
             {payload.watermarkedImages && payload.watermarkedImages.length > 0 && (
               <div className="space-y-3 pt-2">
-                <div className="flex items-center space-x-2 text-xs font-extrabold text-slate-800">
-                  <Paperclip className="w-4 h-4 text-sky-600" />
-                  <span>
-                    {lang === 'hi' ? TRANSLATIONS.evidenceAttached.hi : TRANSLATIONS.evidenceAttached.en} ({payload.watermarkedImages.length})
-                  </span>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2 text-xs font-extrabold text-slate-800">
+                    <Paperclip className="w-4 h-4 text-sky-600" />
+                    <span>
+                      {lang === 'hi' ? TRANSLATIONS.evidenceAttached.hi : TRANSLATIONS.evidenceAttached.en} ({payload.watermarkedImages.length})
+                    </span>
+                  </div>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
                   {payload.watermarkedImages.map((img, idx) => (
-                    <div key={idx} className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden p-2.5 space-y-2 shadow-xs">
-                      <img src={img.dataUrl} alt={img.caption} className="w-full h-36 object-cover rounded-xl border border-slate-200" />
-                      <p className="text-[11px] text-slate-700 font-bold truncate px-1">{img.caption}</p>
+                    <div key={idx} className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden p-3 space-y-2.5 shadow-xs flex flex-col justify-between">
+                      <div>
+                        {img.dataUrl ? (
+                          <img src={img.dataUrl} alt={img.caption} className="w-full h-36 object-cover rounded-xl border border-slate-200" />
+                        ) : (
+                          <div className="w-full h-36 bg-slate-100 rounded-xl flex items-center justify-center text-xs text-slate-500 font-bold">
+                            Photo #{idx + 1} Evidence
+                          </div>
+                        )}
+                        <p className="text-[11px] text-slate-700 font-bold truncate mt-2 px-0.5">{img.caption}</p>
+                      </div>
+
+                      {img.dataUrl && (
+                        <button
+                          type="button"
+                          onClick={() => handleDownloadPhoto(img.dataUrl, idx)}
+                          className="w-full py-2 px-3 rounded-xl bg-sky-50 hover:bg-sky-100 text-sky-900 border border-sky-200 text-xs font-extrabold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
+                        >
+                          <Download className="w-3.5 h-3.5 text-sky-600" />
+                          <span>{lang === 'hi' ? `फोटो #${idx + 1} डाउनलोड करें` : `Download Photo #${idx + 1}`}</span>
+                        </button>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -240,7 +290,7 @@ export const EmailPreviewInspector: React.FC<EmailPreviewInspectorProps> = ({
               ? (lang === 'hi' ? TRANSLATIONS.sendingEmailBtn.hi : TRANSLATIONS.sendingEmailBtn.en)
               : (lang === 'hi' ? TRANSLATIONS.sendEmailBtn.hi : TRANSLATIONS.sendEmailBtn.en)}
           </span>
-          <ArrowRight className="w-5 h-5" />
+          <ArrowRight className="w-5 h-5 text-sky-200" />
         </button>
       </div>
     </div>

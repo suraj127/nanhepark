@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { CheckCircle, Mail, ExternalLink, RefreshCw, Building2, MapPin, Volume2, VolumeX } from 'lucide-react';
+import { CheckCircle, Mail, ExternalLink, RefreshCw, Building2, MapPin, Volume2, VolumeX, Download, Info, Paperclip } from 'lucide-react';
 import { CombinedEmailPayload } from '@/lib/types';
 import { useLanguage } from '@/lib/LanguageContext';
 import { TRANSLATIONS } from '@/lib/translations';
@@ -25,8 +25,18 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
     if (isSpeaking) {
       stopSpeaking();
     } else {
-      speakText("Badhaai ho! Aapki shikayat safalta se bhej di gayi hai. Gmail link par click karke dekhein.");
+      speakText("बधाई हो! आपकी शिकायत रिपोर्ट तैयार है। जीमेल खोलें बटन दबाएं। जीमेल में वाटरमार्क फोटो जोड़ने के लिए नीचे फोटो डाउनलोड करें दबाएं और जीमेल में अटैच पिन दबाकर जोड़ें।");
     }
+  };
+
+  const handleDownloadPhoto = (dataUrl: string, index: number) => {
+    if (!dataUrl) return;
+    const a = document.createElement('a');
+    a.href = dataUrl;
+    a.download = `Civic_Evidence_Photo_${index + 1}.jpg`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
   };
 
   return (
@@ -58,7 +68,7 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
             }`}
           >
             {isSpeaking ? <VolumeX className="w-4 h-4 text-rose-600" /> : <Volume2 className="w-4 h-4 text-sky-600" />}
-            <span>{isSpeaking ? 'Stop Audio' : (lang === 'hi' ? '🔊 संदेश सुनें' : '🔊 Listen Voice Message')}</span>
+            <span>{isSpeaking ? 'Stop Audio' : (lang === 'hi' ? '🔊 संदेश सुनें (हिंदी)' : '🔊 Listen Voice Message')}</span>
           </button>
         </div>
 
@@ -69,12 +79,59 @@ export const SuccessScreen: React.FC<SuccessScreenProps> = ({
               href={gmailWebLink}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center space-x-2 px-7 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base shadow-md transition cursor-pointer hover:scale-[1.02]"
+              className="inline-flex items-center justify-center space-x-2 px-8 py-4 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-sm sm:text-base shadow-md transition cursor-pointer hover:scale-[1.02]"
             >
               <Mail className="w-5 h-5 text-sky-400" />
               <span>{lang === 'hi' ? TRANSLATIONS.openGmailBtn.hi : TRANSLATIONS.openGmailBtn.en}</span>
-              <ExternalLink className="w-4 h-4" />
+              <ExternalLink className="w-4 h-4 text-slate-400" />
             </a>
+          </div>
+        )}
+
+        {/* Photo Attachment Guidance Banner */}
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-left text-xs text-amber-900 space-y-1">
+          <p className="font-extrabold flex items-center gap-1 text-amber-950">
+            <Info className="w-4 h-4 text-amber-600 shrink-0" />
+            <span>{lang === 'hi' ? 'जीमेल में फोटो कैसे अटैच करें:' : 'How to attach photos in Gmail:'}</span>
+          </p>
+          <p className="leading-relaxed text-amber-900 font-medium pl-5">
+            {lang === 'hi'
+              ? 'इंटरनेट सुरक्षा नियमों के कारण कोई भी वेबसाइट फोन की फोटो ईमेल में सीधे अपने आप नहीं डाल सकती। ऊपर बटन दबाकर जीमेल खोलें ➔ नीचे दिए "फोटो डाउनलोड करें" बटन दबाएं ➔ जीमेल में अटैच पिन (📎) दबाकर फोटो जोड़ें।'
+              : 'Web browsers do not allow auto-attaching local files. Open Gmail above, click "Download Photo" below, then tap the attachment pin (📎) in Gmail to attach your photo.'}
+          </p>
+        </div>
+
+        {/* Download Watermarked Photos Section */}
+        {payload.watermarkedImages && payload.watermarkedImages.length > 0 && (
+          <div className="pt-2 text-left space-y-3">
+            <div className="flex items-center space-x-2 text-xs font-extrabold text-slate-800">
+              <Paperclip className="w-4 h-4 text-sky-600" />
+              <span>{lang === 'hi' ? 'जीमेल में अटैच करने हेतु वाटरमार्क फोटो:' : 'Watermarked Evidence Photos for Attachment:'}</span>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              {payload.watermarkedImages.map((img, idx) => (
+                <div key={idx} className="bg-slate-50 border border-slate-200 rounded-2xl p-2.5 space-y-2 text-center">
+                  {img.dataUrl ? (
+                    <img src={img.dataUrl} alt={img.caption} className="w-full h-28 object-cover rounded-xl border border-slate-200" />
+                  ) : (
+                    <div className="w-full h-28 bg-slate-200 rounded-xl flex items-center justify-center text-xs text-slate-500 font-bold">
+                      Photo #{idx + 1}
+                    </div>
+                  )}
+                  {img.dataUrl && (
+                    <button
+                      type="button"
+                      onClick={() => handleDownloadPhoto(img.dataUrl, idx)}
+                      className="w-full py-2 px-3 rounded-xl bg-white hover:bg-sky-50 text-sky-900 border border-sky-200 text-xs font-extrabold flex items-center justify-center gap-1.5 transition cursor-pointer shadow-2xs"
+                    >
+                      <Download className="w-3.5 h-3.5 text-sky-600" />
+                      <span>{lang === 'hi' ? `फोटो #${idx + 1} डाउनलोड करें` : `Download Photo #${idx + 1}`}</span>
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         )}
       </div>
